@@ -18,4 +18,4 @@ jobs:
       run: docker build -t bitbake-doc-cn utils/docker
 
     - name: run_docker
-      run: docker run -it -u $(id -u):$(id -g) -v $(pwd):/bitbake-doc-cn --rm bitbake-doc-cn make clean && make
+      run: docker run -u $(id -u):$(id -g) -v $(pwd):/bitbake-doc-cn --rm bitbake-doc-cn make clean && make
