@@ -1,0 +1,21 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build_docker
+      run: docker build -t bitbake-doc-cn utils/docker
+
+    - name: run_docker
+      run: docker run -it -u $(id -u):$(id -g) -v $(pwd):/bitbake-doc-cn --rm bitbake-doc-cn make clean && make
