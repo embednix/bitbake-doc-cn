@@ -1,0 +1,109 @@
+\newchapter{Variable Context}{变量的上下文}
+
+Variables might only have an impact or can be used in certain contexts. Some should only be used in global files like \code{.conf}, while others are intended only for local files like \code{.bb}. This chapter aims to describe some important variable contexts.
+
+变量可能只能在特定的上下文中产生影响或使用。有些变量只能在全局文件中使用，例如 \code{.conf} 配置文件，而其他变量则只能在本地文件中使用，例如 \code{.bb} 配方文件。本章旨在描述一些重要的变量的上下文。
+
+\newsection{BitBake's own configuration}{BitBake自身配置}
+Variables starting with \code{BB_} usually configure the behaviour of BitBake itself. For example, one could configure:
+
+以 \code{BB_} 开头的变量通常是用来对 BitBake 本身的行为进行配置。例如，这些变量可以配置：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item System resources, like disk space to be used (\bbgls{BB_DISKMON_DIRS}), or the number of tasks to be run in parallel by BitBake (\bbgls{BB_NUMBER_THREADS}).
+
+\medskip
+系统资源，例如要使用的磁盘空间（ \bbgls{BB_DISKMON_DIRS}），或 BitBake 可以并行运行的任务数\linebreak（\bbgls{BB_NUMBER_THREADS}）。
+
+\item How the fetchers shall behave, e.g., \bbgls{BB_FETCH_PREMIRRORONLY} is used by BitBake to determine if BitBake's fetcher shall search only \bbgls{PREMIRRORS} for files.
+
+\medskip
+fetcher 应如何行动，例如，BitBake 使用 \bbgls{BB_FETCH_PREMIRRORONLY} 来确定 BitBake 的 fetcher 是否应仅在 \bbgls{PREMIRRORS} 变量所指定的地方中搜索文件。
+\end{itemize}
+
+Those variables are usually configured globally.
+
+这些变量通常是全局配置的。
+
+\newsection{BitBake configuration}{BitBake 的配置}
+There are variables:
+
+有些变量：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+    
+\item Like \bbgls{B} or \bbgls{T}, that are used to specify directories used by BitBake during the build of a particular recipe. Those variables are specified in \code{bitbake.conf}. Some, like \bbgls{B}, are quite often overwritten in recipes.
+
+\medskip
+像变量 \bbgls{B} 或者 \bbgls{T} 一样，它们用于指定 BitBake 在构建特定配方期间使用的目录。这些变量都是在 \code{bitbake.conf} 文件被指定。有些变量，如 \bbgls{B}，则经常在配方文件中被重写。
+
+\item Starting with \code{FAKEROOT}, to configure how the \code{fakeroot} command is handled. Those are usually set by \code{bitbake.conf} and might get adapted in a \code{bbclass}.
+
+\medskip
+是以 \code{FAKEROOT} 开头，这些变量用来配置如何处理 \code{fakeroot} 命令。这些变量通常由 \code{bitbake.conf} 配置文件进行设定，并可能在 \code{bbclass} 类文件中进行调整。
+
+\item Detailing where BitBake will store and fetch information from, for data reuse between build runs like \bbgls{CACHE}, \bbgls{DL_DIR} or \bbgls{PERSISTENT_DIR}. Those are usually global.
+
+\medskip
+是用来详细说明 BitBake 将从何处存储和获取信息的变量，比如 \bbgls{CACHE}、\bbgls{DL_DIR} 或 \bbgls{PERSISTENT_DIR} 等等。这些变量可以让 BitBake 在构建运行之间重复使用一些数据。这些通常是全局性的变量。
+\end{itemize}
+
+
+\newsection{Layers and files}{层与文件}
+Variables starting with \code{LAYER} configure how BitBake handles layers. Additionally, variables starting with BB configure how layers and files are handled. For example:
+
+以 \code{LAYER} 开头的变量是用来配置 BitBake 如何来处理层。此外，以 \code{BB} 开头的变量是用来配置如何处理层和文件。例如：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+   
+\item \bbgls{LAYERDEPENDS} is used to configure on which layers a given layer depends.
+
+\medskip
+\bbgls{LAYERDEPENDS} 用于配置给定层所依赖的层。
+
+\item The configured layers are contained in \bbgls{BBLAYERS} and files in \bbgls{BBFILES}.
+
+\medskip
+要进行配置的层是定义在 \bbgls{BBLAYERS} 变量中，要进行配置的文件则是定义在在 \bbgls{BBFILES} 变量中。
+\end{itemize}
+
+Those variables are often used in the files \code{layer.conf} and \code{bblayers.conf}.
+
+这些变量经常在文件 \code{layer.conf} 和 \code{bblayers.conf} 中使用。
+
+\newsection{Recipes and packages}{配方与软件包}
+Variables handling recipes and packages can be split into:
+
+用来处理配方和软件包的变量可以分为：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+    
+\item \bbgls{PN}, \bbgls{PV} or \bbgls{PF} for example, contain information about the name or revision of a recipe or package. Usually, the default set in \code{bitbake.conf} is used, but those are from time to time overwritten in recipes.
+
+\medskip
+\bbgls{PN}、 \bbgls{PV} 或 \bbgls{PF} 包含了有关配方或软件包的名称或者版本相关的信息。通常使用 \code{bitbake.conf} 文件中的默认设置，但这些设置有时会在配方中被重写。
+
+\item \bbgls{SUMMARY}, \bbgls{DESCRIPTION}, \bbgls{LICENSE} or \bbgls{HOMEPAGE} contain the expected information and should be set specifically for every recipe.
+
+\medskip
+\bbgls{SUMMARY}、 \bbgls{DESCRIPTION}、 \bbgls{LICENSE} 或 \bbgls{HOMEPAGE} 包含了所预期的信息，这些变量应针对每个配方进行专门设置。
+
+\item In recipes, variables are also used to control build and runtime dependencies between recipes/packages with other recipes/packages. The most common should be: \bbgls{PROVIDES}, \bbgls{RPROVIDES}, \bbgls{DEPENDS}, and \bbgls{RDEPENDS}.
+
+\medskip
+在配方中，变量还用于控制配方/软件包与其他配方/软件包之间的构建和运行时的依赖关系。最常见的变量应该是：\bbgls{PROVIDES}、\bbgls{RPROVIDES}、\bbgls{DEPENDS} 和 \bbgls{RDEPENDS}。
+
+\item There are further variables starting with \code{SRC} that specify the sources in a recipe like \bbgls{SRC_URI} or \bbgls{SRCDATE}. Those are also usually set in recipes.
+
+\medskip
+还有其他以 \code{SRC} 开头的变量，用于指定配方中的源代码的来源，例如 \bbgls{SRC_URI} 或 \bbgls{SRCDATE}。这些变量通常也是在配方文件中进行设置。
+
+\item Which version or provider of a recipe should be given preference when multiple recipes would provide the same item, is controlled by variables starting with \code{PREFERRED_}. Those are normally set in the configuration files of a \code{MACHINE} or \code{DISTRO}.
+
+\medskip
+以 \code{PREFERRED_} 开头的变量用来配置来多个配方都能过提供相同的东西时，应优先考虑使用配方的哪个版本或哪个提供者。这些变量通常是在目标机器（\code{MACHINE}）或发行版本（\code{DISTRO}）的配置文件中设置。
+\end{itemize}

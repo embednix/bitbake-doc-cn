@@ -517,9 +517,9 @@ It is also worth noting that the end result of signature generators is to make s
 当前正在运行的任务的哈希值。
 \end{itemize}
 
-It is worth noting that BitBake's ``-S" option lets you debug BitBake's processing of signatures. The options passed to -S allow different debugging modes to be used, either using BitBake's own debug functions or possibly those defined in the metadata/signature handler itself. The simplest parameter to pass is ``none'', which causes a set of signature information to be written out into \code{STAMPS_DIR} corresponding to the targets specified. The other currently available parameter is ``printdiff'', which causes BitBake to try to establish the closest signature match it can (e.g. in the sstate cache) and then run \code{bitbake-diffsigs} over the matches to determine the stamps and delta where these two stamp trees diverge.
+It is worth noting that BitBake's ``-S'' option lets you debug BitBake's processing of signatures. The options passed to -S allow different debugging modes to be used, either using BitBake's own debug functions or possibly those defined in the metadata/signature handler itself. The simplest parameter to pass is ``none'', which causes a set of signature information to be written out into \code{STAMPS_DIR} corresponding to the targets specified. The other currently available parameter is ``printdiff'', which causes BitBake to try to establish the most recent signature match it can (e.g. in the sstate cache) and then run compare the matched signatures to determine the stamps and delta where these two stamp trees diverge. This can be used to determine why tasks need to be re-run in situations where that is not expected.
 
-值得注意的是，BitBake 的 ``-S'' 选项允许你对 BitBake 的签名处理过程进行调试。传递给 ``-S'' 选项的不同参数允许用户使用不同的调试模式：既可以使用 BitBake 自己的调试函数，也可以使用元数据/签名处理程序本身所定义的调试函数。最简单的参数是 ``none''，它会把一组签名信息输出到相应任务所指定的 \code{STAMPS_DIR} 目录中。另一个可用的参数是 ``printdiff''，它使 BitBake 尝试去建立最接近的签名匹配（例如在状态缓存中），然后再对这些所建立的匹配来运行 \code{bitbake-diffsigs} 以确定这些标记树在分叉时的标记和变化部分。
+值得注意的是，BitBake 的 ``-S'' 选项允许你对 BitBake 的签名处理过程进行调试。传递给 ``-S'' 选项的不同参数允许用户使用不同的调试模式：既可以使用 BitBake 自己的调试函数，也可以使用元数据/签名处理程序本身所定义的调试函数。最简单的参数是 ``none''，它会把一组签名信息输出到相应任务所指定的 \code{STAMPS_DIR} 目录中。另一个可用的参数是 ``printdiff''，它使 BitBake 尝试去建立最新的签名匹配（例如在状态缓存中），然后再对这些所建立的匹配来运行 \code{bitbake-diffsigs} 以确定这些标记树在分叉时的标记和变化部分。
 
 
 
