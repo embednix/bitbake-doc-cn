@@ -1,0 +1,2481 @@
+\makeglossaries
+\glsentry{ASSUME_PROVIDED}{ASSUME\_PROVIDED}{%
+Lists recipe names (\bbgls{PN} values) BitBake does not attempt to build. Instead, BitBake assumes these recipes have already been built.
+
+\medskip
+用来列出 BitBake 不会尝试构建的配方名称（\bbgls{PN}值）。BitBake 假定这些配方已经被构建完成了。
+
+\medskip
+In OpenEmbedded-Core, \bbgls{ASSUME_PROVIDED} mostly specifies native tools that should not be built. An example is \code{git-native}, which when specified allows for the Git binary from the host to be used rather than building \code{git-native}.
+
+\medskip
+在 OpenEmbedded-Core 中，\bbgls{ASSUME_PROVIDED}主要用来指定不应被构建的本机工具。例如 \code{git-native}，当此变量被指定为 \code{git-native} 时，允许使用构建主机上的 Git 二进制可执行文件，而不是重新构建 \code{git-native} 包。
+
+}
+
+\glsentry{AZ_SAS}{AZ\_SAS}{%
+Azure Storage Shared Access Signature, when using the \bbsections{Az Fetcher}{Azure Storage fetcher} This variable can be defined to be used by the fetcher to authenticate and gain access to non-public artifacts:
+
+\medskip
+Azure 存储共享访问签名，使用 Azure 存储 fetcher 时 ，可以定义此变量以供 fetcher 用于进行身份验证并获取非公开构建生成物的访问权限：
+
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+AZ\_SAS = ""se=2021-01-01\&sp=r\&sv=2018-11-09\&sr=c\&skoid=<skoid>\&sig=<signature>""
+"
+}
+\end{codeblock}
+
+For more information see Microsoft's Azure Storage documentation at \url{https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview}
+
+\medskip
+相关的更多信息，请参阅 Microsoft 的 Azure 存储文档： \url{https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview}
+
+}
+
+\glsentry{B}{B}{%
+The directory in which BitBake executes functions during a recipe's build process.
+
+\medskip
+BitBake 在配方构建过程中用来执行函数的工作目录。
+
+}
+
+\glsentry{BB_ALLOWED_NETWORKS}{BB\_ALLOWED\_NETWORKS}{%
+Specifies a space-delimited list of hosts that the fetcher is allowed to use to obtain the required source code. Following are considerations surrounding this variable:
+
+\medskip
+用来指定一个用空格进行分隔的，允许 fetcher 用来获取所需源代码的主机的列表。以下是有关此变量的注意事项：
+
+\medskip
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item This host list is only used if \bbgls{BB_NO_NETWORK} is either not set or set to ``0''.
+
+\medskip
+仅当 \bbgls{BB_NO_NETWORK} 未设置或设置为 ``0'' 时才可使用此主机列表。
+
+\item Limited support for the ``*" wildcard character for matching against the beginning of host names exists. For example, the following setting matches \code{git.gnu.org}, \code{ftp.gnu.org}, and \code{foo.git.gnu.org}.
+
+\medskip
+对于使用``*''通配符来匹配主机名开头的支持是有限的。例如，以下设置能够匹配 \code{git.gnu.org}, \code{ftp.gnu.org},和\code{foo.git.gnu.org}。
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_ALLOWED\_NETWORKS = "\*.gnu.org"
+}
+\end{codeblock}
+
+\medskip
+\begin{noteblock}{Important}
+
+The use of the ``*" character only works at the beginning of a host name and it must be isolated from the remainder of the host name. You cannot use the wildcard character in any other location of the name or combined with the front part of the name.
+
+\medskip
+``*'' 字符只能在主机名的开头使用，并且必须与主机名的其余部分分割开来。你不能在主机名称的任何其他位置使用此通配符，也不能将其与主机名称的前面部分来组合使用。
+
+\medskip
+For example, \code{*.foo.bar} is supported, while \code{*aa.foo.bar} is not.
+
+\medskip
+例如，\code{*.foo.bar} 是支持的，但是 \code{*aa.foo.bar} 是不支持的。
+\end{noteblock}
+
+\item Mirrors not in the host list are skipped and logged in debug.
+
+\medskip
+不在主机列表中的镜像将被忽略并被记录在调试日志中。
+
+\item Attempts to access networks not in the host list cause a failure.
+
+\medskip
+尝试访问不在主机列表中的网络会导致失败。
+\end{itemize}
+
+\medskip
+Using \bbgls{BB_ALLOWED_NETWORKS} in conjunction with \bbgls{PREMIRRORS} is very useful. Adding the host you want to use to \bbgls{PREMIRRORS} results in the source code being fetched from an allowed location and avoids raising an error when a host that is not allowed is in a \bbgls{SRC_URI} statement. This is because the fetcher does not attempt to use the host listed in \bbgls{SRC_URI} after a successful fetch from the \bbgls{PREMIRRORS} occurs.
+
+\medskip
+在下载源代码的时间，将 \bbgls{BB_ALLOWED_NETWORKS} 与 \bbgls{PREMIRRORS} 结合起来使用是非常有用的。将要使用的主机添加到 \bbgls{PREMIRRORS} 上去，这样源代码就会从允许的位置上下载下来，而且可以避免在 \bbgls{SRC_URI} 语句中存在不允许的主机时引发错误。这是因为在成功从 \bbgls{PREMIRRORS}获取源代码后，fetcher 就不会再尝试使用 \bbgls{SRC_URI} 中列出的主机了。
+
+}
+
+\glsentry{BB_BASEHASH_IGNORE_VARS}{BB\_BASEHASH\_IGNORE\_VARS}{%
+Lists variables that are excluded from checksum and dependency data. Variables that are excluded can therefore change without affecting the checksum mechanism. A common example would be the variable for the path of the build. BitBake's output should not (and usually does not) depend on the directory in which it was built.
+
+\medskip
+用来列出从校验和和依赖项数据中排除的变量名。这种情况下，被排除的变量可以随意更改而不会影响校验和机制。一个常见的例子是存储构建路径的变量。BitBake 的输出不应该（通常也不会）依赖于构建它的目录路径。
+
+}
+
+\glsentry{BB_CACHEDIR}{BB\_CACHEDIR}{%
+Specifies the code parser cache directory (distinct from \bbgls{CACHE} and \bbgls{PERSISTENT_DIR} although they can be set to the same value if desired). The default value is ``\code{${TOPDIR}/cache}".
+
+\medskip
+用来指定代码解析器的缓存目录（尽管可以根据需要将 \bbgls{CACHE} 和 \bbgls{PERSISTENT_DIR} 两个变量设置为相同的值，但是这些变量是不同的）。默认值为“\code{${TOPDIR}/cache}”。
+
+}
+
+\glsentry{BB_CHECK_SSL_CERTS}{BB\_CHECK\_SSL\_CERTS}{%
+Specifies if SSL certificates should be checked when fetching. The default value is \code{1} and certificates are not checked if the value is set to \code{0}.
+
+\medskip
+用来指定在获取源代码时是否应检查 SSL 证书。默认值为 \code{1}，如果将值设置为 \code{0} 则不检查 SSL 证书。
+
+}
+
+\glsentry{BB_CONSOLELOG}{BB\_CONSOLELOG}{%
+Specifies the path to a log file into which BitBake's user interface writes output during the build.
+
+\medskip
+用来指定 BitBake 的用户界面在构建工作期间输出的日志文件的路径。
+
+}
+
+\glsentry{BB_CURRENTTASK}{BB\_CURRENTTASK}{%
+Contains the name of the currently running task. The name does not include the \code{do_} prefix.
+
+\medskip
+包含当前正在运行的任务的名称。名称不包含前缀 do\_。
+
+}
+
+\glsentry{BB_DANGLINGAPPENDS_WARNONLY}{BB\_DANGLINGAPPENDS\_WARNONLY}{%
+Defines how BitBake handles situations where an append file (.bbappend) has no corresponding recipe file (.bb). This condition often occurs when layers get out of sync (e.g. oe-core bumps a recipe version and the old recipe no longer exists and the other layer has not been updated to the new version of the recipe yet).
+
+\medskip
+定义 BitBake 如何处理配方附加文件 ( \code{.bbappend}) 没有相应的配方文件 ( \code{.bb}) 的情况。这种情况通常发生在层不同步的时间（例如，oe-core 更新了配方的版本，旧的配方不再存在，而另一层尚未更新到新版本的配方）。
+
+\medskip
+The default fatal behavior is safest because it is the sane reaction given something is out of sync. It is important to realize when your changes are no longer being applied.
+
+\medskip
+BitBake 默认的报告致命错误的处理方法是最安全的，因为它是当察觉到某些内容不同步时做出的理智反应。能意识到你的更改何时不再适用当前的配置是非常重要的。
+
+}
+
+\glsentry{BB_DEFAULT_TASK}{BB\_DEFAULT\_TASK}{%
+The default task to use when none is specified (e.g. with the \code{-c} command line option). The task name specified should not include the \code{do_} prefix.
+
+\medskip
+BitBake 在未被指定特定任务时（例如使用 \code{-c} 命令行选项）选用的默认任务。指定的任务名称不应包含前缀 \code{do_}。
+
+}
+
+\glsentry{BB_DEFAULT_UMASK}{BB\_DEFAULT\_UMASK}{%
+The default umask to apply to tasks if specified and no task specific umask flag is set.
+
+\medskip
+如果此变量已经被设置但是尚未设置只适用于于某任务的 umask 标志，则使用此变量的赋值作为任务的默认 umask 标志。
+
+}
+
+\glsentry{BB_DISKMON_DIRS}{BB\_DISKMON\_DIRS}{%
+Monitors disk space and available inodes\footnotemark[1] during the build and allows you to control the build based on these parameters.
+
+\medskip
+在构建期间监视磁盘空间和可用的 inode\footnotemark[1]，并允许你根据这些参数来控制构建过程。
+
+\footnotetext[1]{inode（index node）是指在许多``类Unix文件系统''中的一种数据结构，用于描述文件系统对象（包括文件、目录、设备文件、socket、管道等）,参见 \url{https://en.wikipedia.org/wiki/Inode}}
+\medskip
+Disk space monitoring is disabled by default. When setting this variable, use the following form:
+
+\medskip
+对磁盘空间的监控默认是禁用的。设置此变量时，请使用以下形式：
+
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_DISKMON\_DIRS = "<action>,<dir>,<threshold> [...]" \linebreak
+\linebreak
+where: \linebreak
+\linebreak
+${}$\ \ \ <action> is: \linebreak
+${}$\ \ \ \ \ \ HALT:      Immediately halt the build when \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ a threshold is broken. \linebreak
+${}$\ \ \ \ \ \ STOPTASKS: Stop the build after the currently \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ executing tasks have finished when \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ a threshold is broken. \linebreak
+${}$\ \ \ \ \ \ WARN:      Issue a warning but continue the \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ build when a threshold is broken. \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Subsequent warnings are issued as \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ defined by the \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BB\_DISKMON\_WARNINTERVAL variable, \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ which must be defined. \linebreak
+\linebreak
+${}$\ \ \ <dir> is: \linebreak
+${}$\ \ \ \ \ \ Any directory you choose. You can specify one or \linebreak
+${}$\ \ \ \ \ \ more directories to monitor by separating the \linebreak
+${}$\ \ \ \ \ \ groupings with a space.  If two directories are \linebreak
+${}$\ \ \ \ \ \ on the same device, only the first directory \linebreak
+${}$\ \ \ \ \ \ is monitored. \linebreak
+\linebreak
+${}$\ \ \ <threshold> is: \linebreak
+${}$\ \ \ \ \ \ Either the minimum available disk space, \linebreak
+${}$\ \ \ \ \ \ the minimum number of free inodes, or \linebreak
+${}$\ \ \ \ \ \ both.  You must specify at least one.  To \linebreak
+${}$\ \ \ \ \ \ omit one or the other, simply omit the value. \linebreak
+${}$\ \ \ \ \ \ Specify the threshold using G, M, K for Gbytes, \linebreak
+${}$\ \ \ \ \ \ Mbytes, and Kbytes, respectively. If you do \linebreak
+${}$\ \ \ \ \ \ not specify G, M, or K, Kbytes is assumed by \linebreak
+${}$\ \ \ \ \ \ default.  Do not use GB, MB, or KB.
+}
+\end{codeblock}
+
+\medskip
+Here are some examples:
+
+\medskip
+参见下面的例子：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_DISKMON\_DIRS = "HALT,\$\{TMPDIR\},1G,100K WARN,\$\{SSTATE\_DIR\},1G,100K" \linebreak
+BB\_DISKMON\_DIRS = "STOPTASKS,\$\{TMPDIR\},1G" \linebreak
+BB\_DISKMON\_DIRS = "HALT,\$\{TMPDIR\},,100K"
+}
+\end{codeblock}
+
+\medskip
+The first example works only if you also set the \bbgls{BB_DISKMON_WARNINTERVAL} variable. This example causes the build system to immediately halt when either the disk space in \code{${TMPDIR}} drops below 1 Gbyte or the available free inodes drops below 100 Kbytes. Because two directories are provided with the variable, the build system also issues a warning when the disk space in the \code{${SSTATE_DIR}} directory drops below 1 Gbyte or the number of free inodes drops below 100 Kbytes. Subsequent warnings are issued during intervals as defined by the \bbgls{BB_DISKMON_WARNINTERVAL} variable.
+
+\medskip
+第一个例子仅在你还设置了 \bbgls{BB_DISKMON_WARNINTERVAL} 变量时才有效。此例子会告诉构建系统在 \code{${TMPDIR}} 目录的磁盘空间降至 1 GB 以下或可用空闲 inode 降至 100 KB 以下时立即停止构建。由于变量提供了两个目录，因此当 \code{${SSTATE_DIR}} 目录中的磁盘空间降至 1 GB 以下或空闲 inode 数量降至 100 KB 以下时，构建系统也会发出警告。后续警告将以 \bbgls{BB_DISKMON_WARNINTERVAL}变量定义的间隔持续发出。
+
+\medskip
+The second example stops the build after all currently executing tasks complete when the minimum disk space in the \code{${TMPDIR}} directory drops below 1 Gbyte. No disk monitoring occurs for the free inodes in this case.
+
+\medskip
+第二个例子是当 \code{${TMPDIR}} 目录的最小磁盘空间低于 1 GB时，在所有当前正在执行的任务完成后就停止构建。在这种情况下，BitBake 不会对空闲的 inode 进行监控。
+
+\medskip
+The final example immediately halts the build when the number of free inodes in the \code{${TMPDIR}} directory drops below 100 Kbytes. No disk space monitoring for the directory itself occurs in this case.
+
+\medskip
+最后一个例子是当 \code{${TMPDIR}} 目录中的可用 inode 数量低于 100 KB 时立即停止构建。在这种情况下，不会对目录本身的磁盘空间进行监控。
+
+}
+
+\glsentry{BB_DISKMON_WARNINTERVAL}{BB\_DISKMON\_WARNINTERVAL}{%
+Defines the disk space and free inode warning intervals.
+
+\medskip
+定义对磁盘空间和可用 inode 数量的警告的间隔时间。
+
+\medskip
+If you are going to use the \bbgls{BB_DISKMON_WARNINTERVAL} variable, you must also use the \bbgls{BB_DISKMON_DIRS} variable and define its action as ``WARN''. During the build, subsequent warnings are issued each time disk space or number of free inodes further reduces by the respective interval.
+
+\medskip
+如果你要使用 \bbgls{BB_DISKMON_WARNINTERVAL} 变量，则还必须同时使用 \bbgls{BB_DISKMON_DIRS} 变量并将其操作定义为 ``WARN''。在构建过程中，在每次磁盘空间或可用 inode 数量进一步减少时，BitBake 都会发出警告。
+
+\medskip
+If you do not provide a \bbgls{BB_DISKMON_WARNINTERVAL} variable and you do use \bbgls{BB_DISKMON_DIRS} with the ``WARN'' action, the disk monitoring interval defaults to the following:
+
+\medskip
+如果你没有定义 \bbgls{BB_DISKMON_WARNINTERVAL} 变量，并且将 \bbgls{BB_DISKMON_DIRS} 与 ``WARN'' 操作一起使用，则磁盘监控的间隔值默为以下内容：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_DISKMON\_WARNINTERVAL = "50M,5K"
+}
+\end{codeblock}
+
+\medskip
+When specifying the variable in your configuration file, use the following form:
+
+\medskip
+在配置文件中指定变量时，请使用以下形式：
+
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_DISKMON\_WARNINTERVAL = "<disk\_space\_interval>,<disk\_inode\_interval>" \linebreak
+\linebreak
+where: \linebreak
+\linebreak
+${}$\ \ \ <disk\_space\_interval> is: \linebreak
+${}$\ \ \ \ \ \ An interval of memory expressed in either \linebreak
+${}$\ \ \ \ \ \ G, M, or K for Gbytes, Mbytes, or Kbytes, \linebreak
+${}$\ \ \ \ \ \ respectively. You cannot use GB, MB, or KB. \linebreak
+\linebreak
+${}$\ \ \ <disk\_inode\_interval> is: \linebreak
+${}$\ \ \ \ \ \ An interval of free inodes expressed in either \linebreak
+${}$\ \ \ \ \ \ G, M, or K for Gbytes, Mbytes, or Kbytes, \linebreak
+${}$\ \ \ \ \ \ respectively. You cannot use GB, MB, or KB.
+}
+\end{codeblock}
+
+\medskip
+Here is an example:
+
+\medskip
+参见下面的例子：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_DISKMON\_DIRS = "WARN,\$\{SSTATE\_DIR\},1G,100K" \linebreak
+BB\_DISKMON\_WARNINTERVAL = "50M,5K"
+}
+\end{codeblock}
+
+\medskip
+These variables cause BitBake to issue subsequent warnings each time the available disk space further reduces by 50 Mbytes or the number of free inodes further reduces by 5 Kbytes in the \code{${SSTATE_DIR}} directory. Subsequent warnings based on the interval occur each time a respective interval is reached beyond the initial warning (i.e. 1 Gbytes and 100 Kbytes).
+
+\medskip
+这些变量会让 BitBake 在每次目录 \code{${SSTATE_DIR}} 中的可用磁盘空间进一步减少 50 MB 或可用 inode 数量进一步减少 5 KB时都会发出连续的警告。在初始警告 （即 1 GB 和 100 KB）之后，每次达到相应的间隔，都会根据间隔信息发出警告。
+
+}
+
+\glsentry{BB_ENV_PASSTHROUGH}{BB\_ENV\_PASSTHROUGH}{%
+Specifies the internal list of variables to allow through from the external environment into BitBake's datastore. If the value of this variable is not specified (which is the default), the following list is used: \bbgls{BBPATH}, \bbgls{BB_PRESERVE_ENV}, \bbgls{BB_ENV_PASSTHROUGH}, and \bbgls{BB_ENV_PASSTHROUGH_ADDITIONS}.
+
+\medskip
+指定允许从外部环境访问 BitBake 数据存储区的内部变量列表。如果此变量的值未设定（默认值），则使用以下列表：\bbgls{BBPATH}, \bbgls{BB_PRESERVE_ENV}, \bbgls{BB_ENV_PASSTHROUGH}, 和\linebreak \bbgls{BB_ENV_PASSTHROUGH_ADDITIONS}。
+
+\medskip
+\begin{noteblock}{Note}
+You must set this variable in the external environment in order for it to work.
+
+\medskip
+你必须在外部环境中设置此变量才能使其正常工作。
+\end{noteblock}
+
+}
+
+\glsentry{BB_ENV_PASSTHROUGH_ADDITIONS}{BB\_ENV\_PASSTHROUGH\_ADDITIONS}{%
+Specifies an additional set of variables to allow through from the external environment into BitBake's datastore. This list of variables are on top of the internal list set in \bbgls{BB_ENV_PASSTHROUGH}.
+
+\medskip
+用来指定额外的一组变量，以允许这些变量从外部环境访问 BitBake 的数据存储区。此变量列表位于\linebreak \bbgls{BB_ENV_PASSTHROUGH} 变量中设置的内部列表之上 。
+
+\medskip
+\begin{noteblock}{Note}
+You must set this variable in the external environment in order for it to work.
+
+\medskip
+你必须在外部环境中设置此变量才能使其正常工作。
+\end{noteblock}
+
+}
+
+\glsentry{BB_FETCH_PREMIRRORONLY}{BB\_FETCH\_PREMIRRORONLY}{%
+When set to ``1'', causes BitBake's fetcher module to only search \bbgls{PREMIRRORS} for files. BitBake will not search the main \bbgls{SRC_URI} or \bbgls{MIRRORS}.
+
+\medskip
+当设置为 ``1'' 时，BitBake 的fetcher 模块仅在 \bbgls{PREMIRRORS} 中搜索文件。BitBake 不会搜索主 \bbgls{SRC_URI} 或 \bbgls{MIRRORS}。
+
+}
+
+\glsentry{BB_FILENAME}{BB\_FILENAME}{%
+Contains the filename of the recipe that owns the currently running task. For example, if the \code{do_fetch} task that resides in the my-recipe.bb is executing, the \bbgls{BB_FILENAME} variable contains ``/foo/path/my-recipe.bb".
+
+\medskip
+此变量的值是拥有当前正在运行的任务的配方的文件名。例如，如果正在执行中的任务 \code{do_fetch} 是定义在 \code{my-recipe.bb} 文件中的，则 \bbgls{BB_FILENAME} 变量的值是 ``/foo/path/my-recipe.bb''。
+
+}
+
+\glsentry{BB_GENERATE_MIRROR_TARBALLS}{BB\_GENERATE\_MIRROR\_TARBALLS}{%
+Causes tarballs of the Git repositories, including the Git metadata, to be placed in the \bbgls{DL_DIR} directory. Anyone wishing to create a source mirror would want to enable this variable.
+
+\medskip
+此变量会让 Git 代码仓库的 tarball 文件（包括 Git 的元数据）放置在 \bbgls{DL_DIR} 目录中。任何希望创建源镜像的人都希望启用此变量。
+
+\medskip
+For performance reasons, creating and placing tarballs of the Git repositories is not the default action by BitBake.
+
+\medskip
+出于性能原因，创建和存放 Git 代码仓库的 tarball 文件不是 BitBake 的默认操作。
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_GENERATE\_MIRROR\_TARBALLS = "1"
+}
+\end{codeblock}
+
+}
+
+\glsentry{BB_GENERATE_SHALLOW_TARBALLS}{BB\_GENERATE\_SHALLOW\_TARBALLS}{%
+Setting this variable to ``1'' when \bbgls{BB_GIT_SHALLOW} is also set to ``1'' causes bitbake to generate shallow mirror tarballs when fetching git repositories. The number of commits included in the shallow mirror tarballs is controlled by \bbgls{BB_GIT_SHALLOW_DEPTH}.
+
+\medskip
+当 \bbgls{BB_GIT_SHALLOW} 也设置为 ``1'' 时，将此变量设置为 ``1'' 会导致 bitbake 在获取 git 代码仓库时生成浅镜像 tarball 文件。浅镜像 tarball 中包含的提交数量由 \bbgls{BB_GIT_SHALLOW_DEPTH} 控制。
+
+\medskip
+If both \bbgls{BB_GIT_SHALLOW} and \bbgls{BB_GENERATE_MIRROR_TARBALLS} are enabled, bitbake will generate shallow mirror tarballs by default for git repositories. This separate variable exists so that shallow tarball generation can be enabled without needing to also enable normal mirror generation if it is not desired.
+
+\medskip
+如果同时启用了 \bbgls{BB_GIT_SHALLOW} 和 \bbgls{BB_GENERATE_MIRROR_TARBALLS}，bitbake 将默认为 git 代码仓库生成浅镜像 tarball 文件。此变量可以单独使用的原因是允许在不需要启用正常镜像生成的情况下可以启用浅镜像 tarball 文件生成。
+
+\medskip
+For example usage, see \bbgls{BB_GIT_SHALLOW}.
+
+\medskip
+有关用法示例，请参阅 \bbgls{BB_GIT_SHALLOW}。
+
+}
+
+\glsentry{BB_GIT_SHALLOW}{BB\_GIT\_SHALLOW}{%
+Setting this variable to ``1'' enables the support for fetching, using and generating mirror tarballs of shallow git repositories. The external git-make-shallow script is used for shallow mirror tarball creation.
+
+\medskip
+将此变量设置为 ``1'' 时将启用对``浅'' git 代码仓库的获取、使用和生成镜像 tarball 的支持。外部 \href{https://git.openembedded.org/bitbake/tree/bin/git-make-shallow}{git-make-shallow} 脚本用于浅镜像 tarball 的创建。
+
+\medskip
+When \bbgls{BB_GIT_SHALLOW} is enabled, bitbake will attempt to fetch a shallow mirror tarball. If the shallow mirror tarball cannot be fetched, it will try to fetch the full mirror tarball and use that.
+
+\medskip
+当启用 \bbgls{BB_GIT_SHALLOW} 时，bitbake 将尝试获取浅镜像的 tarball。如果无法获取浅镜像的 tarball，它将尝试获取并使用完整镜像的 tarball。
+
+\medskip
+When a mirror tarball is not available, a full git clone will be performed regardless of whether this variable is set or not. Support for shallow clones is not currently implemented as git does not directly support shallow cloning a particular git commit hash (it only supports cloning from a tag or branch reference).
+
+\medskip
+当镜像的 tarball 不可用时，无论是否设置此变量，BitBake 都将执行完整的 git 克隆。目前版本的 BitBake 不支持浅克隆，因为 git 不直接支持浅克隆特定的 git 提交哈希值（它仅支持从标记（tag）或者分支（branch）上进行克隆）。
+
+\medskip
+See also \bbgls{BB_GIT_SHALLOW_DEPTH} and \bbgls{BB_GENERATE_SHALLOW_TARBALLS}.
+
+\medskip
+另请参阅 \bbgls{BB_GIT_SHALLOW_DEPTH} 和 \bbgls{BB_GENERATE_SHALLOW_TARBALLS}。
+
+\medskip
+Example usage:
+
+\medskip
+使用实例：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_GIT\_SHALLOW ?= "1" \linebreak
+ \linebreak
+\# Keep only the top commit \linebreak
+BB\_GIT\_SHALLOW\_DEPTH ?= "1" \linebreak
+ \linebreak
+\# This defaults to enabled if both BB\_GIT\_SHALLOW and \linebreak
+\# BB\_GENERATE\_MIRROR\_TARBALLS are enabled \linebreak
+BB\_GENERATE\_SHALLOW\_TARBALLS ?= "1"
+}
+\end{codeblock}
+
+}
+
+\glsentry{BB_GIT_SHALLOW_DEPTH}{BB\_GIT\_SHALLOW\_DEPTH}{%
+When used with \bbgls{BB_GENERATE_SHALLOW_TARBALLS}, this variable sets the number of commits to include in generated shallow mirror tarballs. With a depth of 1, only the commit referenced in \bbgls{SRCREV} is included in the shallow mirror tarball. Increasing the depth includes additional parent commits, working back through the commit history.
+
+\medskip
+当与 \bbgls{BB_GENERATE_SHALLOW_TARBALLS} 一起使用时，此变量会设定要生成的浅镜像的 tarball 中所包含的提交数。当设定的深度为 1 时，浅镜像的 tarball 中仅包含 \bbgls{SRCREV} 中所引用的提交。增加深度数将会包括其他父提交，并会对提交的历史记录进行追溯。
+
+\medskip
+If this variable is unset, bitbake will default to a depth of 1 when generating shallow mirror tarballs.
+
+\medskip
+如果此变量没有设置，bitbake 在生成浅镜像 tarball 时将默认深度为 1。
+
+\medskip
+For example usage, see \bbgls{BB_GIT_SHALLOW}.
+
+\medskip
+有关用法示例，请参阅 \bbgls{BB_GIT_SHALLOW}。
+
+}
+
+\glsentry{BB_GLOBAL_PYMODULES}{BB\_GLOBAL\_PYMODULES}{%
+Specifies the list of Python modules to place in the global namespace. It is intended that only the core layer should set this and it is meant to be a very small list, typically just os and sys. \bbgls{BB_GLOBAL_PYMODULES} is expected to be set before the first \code{addpylib} directive. See also ``\bbsection{Extending Python Library Code}".
+
+\medskip
+此变量用来指定要放置在全局命名空间中的 Python 模块列表。此列表应该仅由核心层来设置，并且应该是一个非常小的列表，通常只有 \code{os} 模块和 \code{sys} 模块。 \bbgls{BB_GLOBAL_PYMODULES} 变量应在第一个 \code{addpylib} 指令之前就设置好。另请参阅 ``\bbsections{Extending Python Library Code}{扩展 Python 库代码}'' 部分。
+
+}
+
+\glsentry{BB_HASH_CODEPARSER_VALS}{BB\_HASH\_CODEPARSER\_VALS}{%
+Specifies values for variables to use when populating the codeparser cache. This can be used selectively to set dummy values for variables to avoid the codeparser cache growing on every parse. Variables that would typically be included are those where the value is not significant for where the codeparser cache is used (i.e. when calculating variable dependencies for code fragments.) The value is space-separated without quoting values, for example:
+
+\medskip
+用来指定填充代码解析器缓存时要使用的变量的值。这可以有选择地用于设置变量的虚拟值，以避免代码解析器的缓存在每次解析时都在增加。通常包含的变量是那些变量的值对于使用还是不使用代码解析器缓存（即在计算代码片段的变量依赖关系时）都不重要的变量。该值以空格分隔，每个项目是没有引号的，例如：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_HASH\_CODEPARSER\_VALS = "T=/ WORKDIR=/ DATE=1234 TIME=1234"
+}
+\end{codeblock}
+
+}
+
+\glsentry{BB_HASHCHECK_FUNCTION}{BB\_HASHCHECK\_FUNCTION}{%
+Specifies the name of the function to call during the ``setscene'' part of the task's execution in order to validate the list of task hashes. The function returns the list of setscene tasks that should be executed.
+
+\medskip
+此变量用于指定在任务执行的 ``场景设置（setscene）'' 期间为了验证任务的哈希列表所调用的函数的名称。该函数返回应执行的场景设置（setscene）任务列表。
+
+\medskip
+At this point in the execution of the code, the objective is to quickly verify if a given setscene function is likely to work or not. It's easier to check the list of setscene functions in one pass than to call many individual tasks. The returned list need not be completely accurate. A given setscene task can still later fail. However, the more accurate the data returned, the more efficient the build will be.
+
+\medskip
+当代码执行到这个时间点的时候，其目标是快速验证给定的场景设置（setscene）函数是否工作。一次性的把这个场景设置（setscene）函数列表里的函数都检查一遍比调用多个单独的任务更容易。返回的这个函数列表不必完全准确，后面的某个给定的场景设置（setscene）任务仍可能失败。但是，返回的数据越准确，此次的构建就会越高效。
+
+}
+
+\glsentry{BB_HASHCONFIG_IGNORE_VARS}{BB\_HASHCONFIG\_IGNORE\_VARS}{%
+Lists variables that are excluded from base configuration checksum, which is used to determine if the cache can be reused.
+
+\medskip
+用以列出从基本配置校验和中排除的变量，这样可以确定缓存是否可以重复使用。
+
+\medskip
+One of the ways BitBake determines whether to re-parse the main metadata is through checksums of the variables in the datastore of the base configuration data. There are variables that you typically want to exclude when checking whether or not to re-parse and thus rebuild the cache. As an example, you would usually exclude TIME and DATE because these variables are always changing. If you did not exclude them, BitBake would never reuse the cache.
+
+\medskip
+BitBake 确定是否需要重新解析主要元数据的方法之一是使用基本配置数据的数据存储区中的变量的校验和。在检查是否重新解析并重建缓存时，通常需要排除一些变量。例如，你通常会排除 \code{TIME} 和 \code{DATE} 这些变量因为它们的值总是在变化。如果你不排除它们，BitBake 将永远不会重新使用缓存。
+
+}
+
+\glsentry{BB_HASHSERVE}{BB\_HASHSERVE}{%
+Specifies the Hash Equivalence\footnotemark[1] server to use.
+
+\medskip
+指定要使用的哈希等价\footnotemark[1]服务器。
+
+\footnotetext[1]{有关 Hash Equivalence，请参阅 \url{https://elinux.org/images/3/37/Hash_Equivalence_and_Reproducible_Builds.pdf}}
+\medskip
+If set to auto, BitBake automatically starts its own server over a UNIX domain socket. An option is to connect this server to an upstream one, by setting \bbgls{BB_HASHSERVE_UPSTREAM}.
+
+\medskip
+如果设置为 auto，BitBake 会自动通过 UNIX socket 来启动自己的服务器。另外一种选择是通过设置\linebreak \bbgls{BB_HASHSERVE_UPSTREAM} 将此服务器连接到上游服务器。
+
+\medskip
+If set to unix://path, BitBake will connect to an existing hash server available over a UNIX domain socket.
+
+\medskip
+如果设置为 \code{unix://path}，BitBake 将通过 UNIX socket 连接到现有的可用的哈希服务器。
+
+\medskip
+If set to host:port, BitBake will connect to a remote server on the specified host. This allows multiple clients to share the same hash equivalence data.
+
+\medskip
+如果设置为 \code{host:port}，BitBake 将连接到指定主机上的远程服务器。这允许多个客户端共享相同的哈希等价数据。
+
+\medskip
+The remote server can be started manually through the bin/bitbake-hashserv script provided by BitBake, which supports UNIX domain sockets too. This script also allows to start the server in read-only mode, to avoid accepting equivalences that correspond to Share State caches that are only available on specific clients.
+
+\medskip
+可以通过 BitBake 提供的脚本 \code{bin/bitbake-hashserv} 来手动启动远程服务器，该脚本也支持 UNIX socket。此脚本还允许以只读模式启动服务器，以避免接受与仅在特定客户端上可用的 Share State 缓存相对应的等价性。
+
+}
+
+\glsentry{BB_HASHSERVE_UPSTREAM}{BB\_HASHSERVE\_UPSTREAM}{%
+Specifies an upstream Hash Equivalence server.
+
+\medskip
+指定上游哈希等价服务器。
+
+\medskip
+This optional setting is only useful when a local Hash Equivalence server is started (setting \bbgls{BB_HASHSERVE} to \code{auto}), and you wish the local server to query an upstream server for Hash Equivalence data.
+
+\medskip
+此可选设置仅在启动本地哈希等价服务器（将 \bbgls{BB_HASHSERVE} 设置为 \code{auto}）并且你希望本地服务器向上游服务器查询哈希等价数据时才有用。
+
+\medskip
+Example usage:
+
+\medskip
+使用示例：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_HASHSERVE\_UPSTREAM = "hashserv.yocto.io:8687"
+}
+\end{codeblock}
+
+}
+
+\glsentry{BB_INVALIDCONF}{BB\_INVALIDCONF}{%
+Used in combination with the \code{ConfigParsed} event to trigger re-parsing the base metadata (i.e. all the recipes). The \code{ConfigParsed} event can set the variable to trigger the re-parse. You must be careful to avoid recursive loops with this functionality.
+
+\medskip
+与 \code{ConfigParsed} 事件结合使用以触发重新解析基本元数据（即所有的配方）。事件 \code{ConfigParsed} 可以设置变量以触发重新解析。你必须小心使用此功能以避免出现递归循环。
+
+}
+
+\glsentry{BB_LOGCONFIG}{BB\_LOGCONFIG}{%
+Specifies the name of a config file that contains the user logging configuration. See \bbsection{Logging} for additional information
+
+\medskip
+指定包含用户的日志记录配置的配置文件的名称。请参阅 \bbsection{Logging} 部分以获取更多信息
+
+
+}
+
+\glsentry{BB_LOGFMT}{BB\_LOGFMT}{%
+Specifies the name of the log files saved into \code{${T}}. By default, the \bbgls{BB_LOGFMT} variable is undefined and the log filenames get created using the following form:
+
+\medskip
+指定保存到 \code{${T}} 目录中的日志文件的名称。默认情况下，\bbgls{BB_LOGFMT} 变量是没有定义的，日志文件名会按照以下格式来创建：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+log.\{task\}.\{pid\}
+}
+\end{codeblock}
+
+\medskip
+If you want to force log files to take a specific name, you can set this variable in a configuration file.
+
+\medskip
+如果你想强制日志文件采用特定的名称，你可以在配置文件中设置此变量。
+
+}
+
+\glsentry{BB_MULTI_PROVIDER_ALLOWED}{BB\_MULTI\_PROVIDER\_ALLOWED}{%
+Allows you to suppress BitBake warnings caused when building two separate recipes that provide the same output.
+
+\medskip
+允许你禁止在构建两个提供相同输出的不同配方时引起 BitBake 发出警告消息。
+
+\medskip
+BitBake normally issues a warning when building two different recipes where each provides the same output. This scenario is usually something the user does not want. However, cases do exist where it makes sense, particularly in the virtual/* namespace. You can use this variable to suppress BitBake's warnings.
+
+\medskip
+当构建两个不同的配方且两个配方都能提供相同的输出时，BitBake 通常会发出警告。用户一般不想看到这种情况，但是这种情况又确实有存在的意义，特别是在 \code{virtual/*} 这一类的命名空间中。你可以使用此变量来禁止 BitBake 发出这样的警告。
+
+\medskip
+To use the variable, list provider names (e.g. recipe names, virtual/kernel, and so forth).
+
+\medskip
+要使用此变量，需要列出包提供者的名称（例如配方名称， \code{virtual/kernel} 等等）。
+
+}
+
+\glsentry{BB_NICE_LEVEL}{BB\_NICE\_LEVEL}{%
+Allows BitBake to run at a specific priority (i.e. nice level). System permissions usually mean that BitBake can reduce its priority but not raise it again. See \bbgls{BB_TASK_NICE_LEVEL} for additional information.
+
+\medskip
+允许 BitBake 以特定优先级（即高优先级）运行。系统权限通常是指 BitBake 可以降低其优先级但不能再次提高。有关的更多信息，请参阅 \bbgls{BB_TASK_NICE_LEVEL}。
+
+}
+
+\glsentry{BB_NO_NETWORK}{BB\_NO\_NETWORK}{%
+Disables network access in the BitBake fetcher modules. With this access disabled, any command that attempts to access the network becomes an error.
+
+\medskip
+禁用 BitBake 的 fetcher 模块中的网络访问权限。禁用此网络访问后，任何尝试访问网络的命令都会被当成错误来报告。
+
+Disabling network access is useful for testing source mirrors, running builds when not connected to the Internet, and when operating in certain kinds of firewall environments.
+
+\medskip
+禁用网络访问对于测试源代码镜像、在未连接到互联网时运行构建以及在装备某些类型的防火墙的环境中的操作很有用。
+
+}
+
+\glsentry{BB_NUMBER_PARSE_THREADS}{BB\_NUMBER\_PARSE\_THREADS}{%
+Sets the number of threads BitBake uses when parsing. By default, the number of threads is equal to the number of cores on the system.
+
+\medskip
+设置 BitBake 在进行解析时所允许使用的线程数。默认情况下，线程数等于系统上的CPU的核心数。
+
+}
+
+\glsentry{BB_NUMBER_THREADS}{BB\_NUMBER\_THREADS}{%
+The maximum number of tasks BitBake should run in parallel at any one time. If your host development system supports multiple cores, a good rule of thumb is to set this variable to twice the number of cores.
+
+\medskip
+BitBake 可并行运行的最大任务数。如果你的主机开发系统支持多核CPU，首屈一指的经验法则是将此变量设置为CPU核数的两倍。
+
+}
+
+\glsentry{BB_ORIGENV}{BB\_ORIGENV}{%
+Contains a copy of the original external environment in which BitBake was run. The copy is taken before any variable values configured to pass through from the external environment are filtered into BitBake's datastore.
+
+\medskip
+此变量包含了一份运行 BitBake 的原始外部环境变量的副本。这份副本是在将配置为从外部环境传递的任何变量值过滤到 BitBake 的数据存储区之前获得的。
+
+\medskip
+\begin{noteblock}{Note}
+The contents of this variable is a datastore object that can be queried using the normal datastore operations.
+
+\medskip
+该变量的内容是一个数据存储对象，可以使用常规数据存储的操作进行查询。
+\end{noteblock}
+
+}
+
+\glsentry{BB_PRESERVE_ENV}{BB\_PRESERVE\_ENV}{%
+Disables environment filtering and instead allows all variables through from the external environment into BitBake's datastore.
+
+\medskip
+禁用环境变量过滤，允许所有变量从外部环境进入 BitBake 的数据存储区。
+
+\medskip
+\begin{noteblock}{Note}
+You must set this variable in the external environment in order for it to work.
+
+\medskip
+你必须在外部环境中设置此变量才能使其正常工作。
+\end{noteblock}
+
+}
+
+\glsentry{BB_PRESSURE_MAX_CPU}{BB\_PRESSURE\_MAX\_CPU}{%
+Specifies a maximum CPU pressure threshold, above which BitBake's scheduler will not start new tasks (providing there is at least one active task). If no value is set, CPU pressure is not monitored when starting tasks.
+
+\medskip
+用来指定 BitBake 所能承受的最大的 CPU 压力阈值，一旦超过此阈值 BitBake 的调度程序将不会在启动新的构建任务（前提是当前至少有一个活动任务在运行）。如果未设置任何值，则 BitBake 在启动任务时不会监控 CPU 所受的压力。
+
+\medskip
+The pressure data is calculated based upon what Linux kernels since version 4.20 expose under \code{/proc/pressure}. The threshold represents the difference in ``total'' pressure from the previous second. The minimum value is 1.0 (extremely slow builds) and the maximum is 1000000 (a pressure value unlikely to ever be reached).
+
+\medskip
+压力数据是根据 Linux 内核 4.20 版及以后版本反映在 \code{/proc/pressure} 下的项目内容计算得出的。此阈值是用来表示与前一秒相比 ``total'' 压力的差异。此变量的最小值为 1.0（构建速度极慢），最大值为 1000000（不太可能达到的压力值）。
+
+\medskip
+This threshold can be set in \code{conf/local.conf} as:
+
+\medskip
+该阈值可以设置在 \code{conf/local.conf} 中：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_PRESSURE\_MAX\_CPU = "500"
+}
+\end{codeblock}
+
+}
+
+\glsentry{BB_PRESSURE_MAX_IO}{BB\_PRESSURE\_MAX\_IO}{%
+Specifies a maximum I/O pressure threshold, above which BitBake's scheduler will not start new tasks (providing there is at least one active task). If no value is set, I/O pressure is not monitored when starting tasks.
+
+\medskip
+用来指定指定 BitBake 所能承受的最大 I/O 压力阈值，一旦超过此阈值 BitBake 的调度程序将不会启动新任务（前提是至少有一个活动任务在运行）。如果未设置任何值，则 BitBake 在启动任务时不会监控此 I/O 压力。
+
+\medskip
+The pressure data is calculated based upon what Linux kernels since version 4.20 expose under \code{/proc/pressure}. The threshold represents the difference in ``total'' pressure from the previous second. The minimum value is 1.0 (extremely slow builds) and the maximum is 1000000 (a pressure value unlikely to ever be reached).
+
+\medskip
+压力数据是根据 Linux 内核 4.20 版及以后版本在反映在 \code{/proc/pressure} 下的项目的内容计算得出的。阈值表示与前一秒相比 ``total'' 压力的差异。此变量的最小值为 1.0（构建速度极慢），最大值为 1000000（不太可能达到的压力值）。
+
+\medskip
+At this point in time, experiments show that I/O pressure tends to be short-lived and regulating just the CPU with \bbgls{BB_PRESSURE_MAX_CPU} can help to reduce it.
+
+\medskip
+当前的实验表明 I/O 压力往往是短暂的，仅使用 \bbgls{BB_PRESSURE_MAX_CPU} 变量来调节 CPU 的负载即可帮助降低此 I/O 压力。
+
+}
+
+\glsentry{BB_PRESSURE_MAX_MEMORY}{BB\_PRESSURE\_MAX\_MEMORY}{%
+Specifies a maximum memory pressure threshold, above which BitBake's scheduler will not start new tasks (providing there is at least one active task). If no value is set, memory pressure is not monitored when starting tasks.
+
+\medskip
+用来指定BitBake所能承受的最大内存压力的阈值，一旦超过此阈值 BitBake 的调度程序将不会启动新任务（前提是至少有一个活动任务在运行）。如果未设置任何值，则 BitBake 在启动任务时不会监控此内存压力。
+
+\medskip
+The pressure data is calculated based upon what Linux kernels since version 4.20 expose under \code{/proc/pressure}. The threshold represents the difference in ``total'' pressure from the previous second. The minimum value is 1.0 (extremely slow builds) and the maximum is 1000000 (a pressure value unlikely to ever be reached).
+
+\medskip
+压力数据是根据 Linux 内核 4.20 版及以后版本反映在 \code{/proc/pressure} 下的项目的内容计算得出的。阈值表示与前一秒相比 ``total'' 压力的差异。此变量的最小值为 1.0（构建速度极慢），最大值为 1000000（不太可能达到的压力值）。
+
+\medskip
+Memory pressure is experienced when time is spent swapping, refaulting pages from the page cache or performing direct reclaim. This is why memory pressure is rarely seen, but setting this variable might be useful as a last resort to prevent OOM\footnotemark[1] errors if they are occurring during builds.
+
+\medskip
+当大量时间是花费在内存交换、从页面缓存中重新加载内存页面或执行直接回收时，都会出现内存压力。一般来说内存压力的问题很少出现，但设置此变量可能是防止在构建期间发生 OOM\footnotemark[1] 错误的最后手段。
+\footnotetext[1]{OOM -- Out Of Memory,就是内存不够用的意思。}
+
+}
+
+\glsentry{BB_RUNFMT}{BB\_RUNFMT}{%
+Specifies the name of the executable script files (i.e. run files) saved into \code{${T}}. By default, the \bbgls{BB_RUNFMT} variable is undefined and the run filenames get created using the following form:
+
+\medskip
+指定保存到 \code{${T}} 目录中的可执行脚本文件（即运行文件）的名称。默认情况下， \bbgls{BB_RUNFMT} 变量是未定义的，并且运行文件的名称使用以下形式来创建：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+run.\{func\}.\{pid\}
+}
+\end{codeblock}
+
+\medskip
+If you want to force run files to take a specific name, you can set this variable in a configuration file.
+
+\medskip
+如果你想强制运行文件采用特定的名称，你可以在配置文件中设置此变量。
+
+}
+
+\glsentry{BB_RUNTASK}{BB\_RUNTASK}{%
+Contains the name of the currently executing task. The value includes the ``do\_'' prefix. For example, if the currently executing task is \code{do_config}, the value is ``do\_config''.
+
+\medskip
+此变量包含了当前正在执行的任务的名称。该值包含了 ``do\_'' 前缀。例如，如果当前正在执行的任务是 \code{do_config} ，则该值为 ``do\_config''。
+
+}
+
+\glsentry{BB_SCHEDULER}{BB\_SCHEDULER}{%
+Selects the name of the scheduler to use for the scheduling of BitBake tasks. Three options exist:
+
+\medskip
+用来选择用于调度 BitBake 任务的调度程序的名称。有三个选项：
+
+\medskip
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{basic} — the basic framework from which everything derives. Using this option causes tasks to be ordered numerically as they are parsed.
+
+\medskip
+所有内容都源自的基本框架。使用此选项会导致任务会按照在解析时的顺序来按数字顺序进行排列。
+
+\item \textbf{speed} — executes tasks first that have more tasks depending on them. The ``speed'' option is the default.
+
+\medskip
+优先执行有更多任务依赖的任务。“speed”选项是默认选项。
+
+\item \textbf{completion} — causes the scheduler to try to complete a given recipe once its build has started.
+
+\medskip
+一旦构建开始，调度程序就会尝试完成所指定的配方的任务。
+\end{itemize}
+
+}
+
+\glsentry{BB_SCHEDULERS}{BB\_SCHEDULERS}{%
+Defines custom schedulers to import. Custom schedulers need to be derived from the RunQueueScheduler class.
+
+\medskip
+用来定义要导入的自定义的调度程序。自定义调度程序需要从 \code{RunQueueScheduler} 类派生出来。
+
+\medskip
+For information how to select a scheduler, see the \bbgls{BB_SCHEDULER} variable.
+
+\medskip
+有关如何选择调度程序的信息，请参阅 \bbgls{BB_SCHEDULER} 变量。
+
+}
+
+\glsentry{BB_SETSCENE_DEPVALID}{BB\_SETSCENE\_DEPVALID}{%
+Specifies a function BitBake calls that determines whether BitBake requires a setscene dependency to be met.
+
+\medskip
+用来给 BitBake 指定一个可以调用的函数，该函数用来确定 BitBake 是否需要满足场景设置（setscene）所需要的依赖关系。
+
+\medskip
+When running a setscene task, BitBake needs to know which dependencies of that setscene task also need to be run. Whether dependencies also need to be run is highly dependent on the metadata. The function specified by this variable returns a ``True'' or ``False'' depending on whether the dependency needs to be met.
+
+\medskip
+在运行 setscene 任务时，BitBake 需要知道该 setscene 任务的哪些依赖项也需要运行。依赖项是否也需要运行高度依赖于元数据。此变量指定的函数根据是否需要满足依赖项返回 ``True'' 或 ``False''。
+
+}
+
+\glsentry{BB_SIGNATURE_EXCLUDE_FLAGS}{BB\_SIGNATURE\_EXCLUDE\_FLAGS}{%
+Lists variable flags (varflags) that can be safely excluded from checksum and dependency data for keys in the datastore. When generating checksum or dependency data for keys in the datastore, the flags set against that key are normally included in the checksum.
+
+\medskip
+列出可以安全地从数据存储区中的键值的校验和和依赖项数据中排除的变量标志 (varflags)。在为数据存储区中的键值生成校验和或依赖项数据时，针对该键值设置的标志通常包含在校验和中。
+
+\medskip
+For more information on varflags, see the ``\bbsection{Variable Flags}'' section.
+
+\medskip
+有关 varflags 的更多信息，请参阅 ``\bbsections{Variable Flags}{变量标志}''部分。
+
+}
+
+\glsentry{BB_SIGNATURE_HANDLER}{BB\_SIGNATURE\_HANDLER}{%
+Defines the name of the signature handler BitBake uses. The signature handler defines the way stamp files are created and handled, if and how the signature is incorporated into the stamps, and how the signature itself is generated.
+
+\medskip
+用来定义 BitBake 使用的签名处理程序的名称。签名处理程序用来定义创建和处理戳记文件的方式、是否以及如何将签名合并到戳记中，以及如何生成签名本身。
+
+\medskip
+A new signature handler can be added by injecting a class derived from the \code{SignatureGenerator} class into the global namespace.
+
+\medskip
+可以将从 \code{SignatureGenerator} 派生出来的类注入到全局命名空间来添加新的签名处理程序。
+
+}
+
+\glsentry{BB_SRCREV_POLICY}{BB\_SRCREV\_POLICY}{%
+Defines the behavior of the fetcher when it interacts with source control systems and dynamic source revisions. The \bbgls{BB_SRCREV_POLICY} variable is useful when working without a network.
+
+\medskip
+用来定义 fetcher 与源代码控制系统和动态源代码版本修订交互时的行为。 当 BitBake 在没有网络的情况下工作时，\bbgls{BB_SRCREV_POLICY} 变量是很有用的。
+
+\medskip
+The variable can be set using one of two policies:
+
+\medskip
+可以使用以下两种策略之一来设置此变量：
+
+\medskip
+\begin{itemize}
+\item cache — retains the value the system obtained previously rather than querying the source control system each time.
+
+\medskip
+保留系统先前获得的值，而不是每次都查询源代码控制系统。
+
+\item clear — queries the source controls system every time. With this policy, there is no cache. The ``clear'' policy is the default.
+
+\medskip
+每次都查询源代码控制系统。使用此策略时，将不会设有缓存。``clear'' 策略是默认策略。
+\end{itemize}
+
+}
+
+\glsentry{BB_STRICT_CHECKSUM}{BB\_STRICT\_CHECKSUM}{%
+Sets a more strict checksum mechanism for non-local URLs. Setting this variable to a value causes BitBake to report an error if it encounters a non-local URL that does not have at least one checksum specified.
+
+\medskip
+为非本地 URL 设置更严格的校验和机制。将此变量设置为某个值会导致 BitBake 在遇到一个非本地 URL 并且此 URL 的校验和不符合任何一个指定的校验和时报告错误。
+
+}
+
+\glsentry{BB_TASK_IONICE_LEVEL}{BB\_TASK\_IONICE\_LEVEL}{%
+Allows adjustment of a task's Input/Output priority. During Autobuilder testing, random failures can occur for tasks due to I/O starvation. These failures occur during various QEMU runtime timeouts. You can use the \bbgls{BB_TASK_IONICE_LEVEL} variable to adjust the I/O priority of these tasks.
+
+\medskip
+允许调整任务的输入/输出优先级。在 Autobuilder 测试期间，由于 I/O 供给不足，任务可能会发生随机的失败。这些故障会发生在 QEMU 的 各种运行超时期间。你可以使用\bbgls{BB_TASK_IONICE_LEVEL} 变量来调整这些任务的 I/O 优先级。
+
+\medskip
+\begin{noteblock}{Note}
+This variable works similarly to the \bbgls{BB_TASK_NICE_LEVEL} variable except with a task's I/O priorities.
+
+\medskip
+除了任务的 I/O 优先级之外，此变量的工作方式与 \bbgls{BB_TASK_NICE_LEVEL} 变量类似。
+\end{noteblock}
+
+\medskip
+Set the variable as follows:
+
+\medskip
+设置变量如下：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BB\_TASK\_IONICE\_LEVEL = "class.prio"
+}
+\end{codeblock}
+
+\medskip
+For class, the default value is ``2'', which is a best effort. You can use ``1'' for realtime and ``3'' for idle. If you want to use realtime, you must have superuser privileges.
+
+\medskip
+对于 \textbf{class}，其默认值为 ``2''，即尽力而为。你也可以使用 ``1'' 表示实时模式，使用 ``3'' 表示空闲模式。如果你想使用实时模式，你必须具有超级用户权限。
+
+\medskip
+For \textbf{prio}, you can use any value from ``0'', which is the highest priority, to ``7'', which is the lowest. The default value is ``4''. You do not need any special privileges to use this range of priority values.
+
+\medskip
+对于 \textbf{prio}，你可以使用从 ``0''（最高优先级）到 ``7''（最低优先级）之间的任意值。默认值为 ``4''。你不需要任何特殊权限即可使用此优先级值范围。
+
+\begin{noteblock}{Note}
+In order for your I/O priority settings to take effect, you need the Completely Fair Queuing (CFQ) Scheduler selected for the backing block device. To select the scheduler, use the following command form where device is the device (e.g. sda, sdb, and so forth):
+
+\medskip
+为了使你的 I/O 优先级设置生效，你需要为块设备选择 Completely Fair Queuing (CFQ) Scheduler 调度程序。要选择调度程序，请使用以下命令形式，其中 \code{device} 是例如 sda、sdb 等的块设备：
+
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+\$ sudo sh -c "echo cfq > /sys/block/device/queu/scheduler"
+}
+\end{codeblock}
+\end{noteblock}
+
+}
+
+\glsentry{BB_TASK_NICE_LEVEL}{BB\_TASK\_NICE\_LEVEL}{%
+Allows specific tasks to change their priority (i.e. nice level).
+
+\medskip
+允许特定任务改变其优先级（即 nice 级别）。
+
+\medskip
+You can use this variable in combination with task overrides to raise or lower priorities of specific tasks. For example, on the Yocto Project autobuilder, QEMU emulation in images is given a higher priority as compared to build tasks to ensure that images do not suffer timeouts on loaded systems.
+
+\medskip
+你可以将此变量与任务重写结合在一起使用，以提高或降低特定任务的优先级。例如，在 Yocto Project 的自动构建器 (autobuilder) 上，与构建任务相比，图像中的 QEMU 模拟被设定为具有更高的优先级，以确保图像在加载的系统上不会超时。
+
+}
+
+\glsentry{BB_TASKHASH}{BB\_TASKHASH}{%
+Within an executing task, this variable holds the hash of the task as returned by the currently enabled signature generator.
+
+\medskip
+在正在执行的任务中，此变量用来保存当前启用的签名生成器返回的任务的哈希值。
+
+}
+
+\glsentry{BB_VERBOSE_LOGS}{BB\_VERBOSE\_LOGS}{%
+Controls how verbose BitBake is during builds. If set, shell scripts echo commands and shell script output appears on standard out (stdout).
+
+\medskip
+控制构建期间 BitBake 的输出的详细程度。如果此变量被设定有效的值，shell 脚本将回显输入的命令，并且 shell 脚本输出将出现在标准输出 (stdout) 上。
+
+}
+
+\glsentry{BB_WORKERCONTEXT}{BB\_WORKERCONTEXT}{%
+Specifies if the current context is executing a task. BitBake sets this variable to ``1'' when a task is being executed. The value is not set when the task is in server context during parsing or event handling.
+
+\medskip
+用来指定当前上下文中是否正在执行任务。当有任务正在执行时，BitBake 将此变量设置为 ``1''。当任务在解析或事件处理期间处于服务器上下文中时，则该值不会被设置。
+
+}
+
+\glsentry{BBCLASSEXTEND}{BBCLASSEXTEND}{%
+Allows you to extend a recipe so that it builds variants of the software. Some examples of these variants for recipes from the OpenEmbedded-Core metadata are ``natives'' such as \code{quilt-native}, which is a copy of Quilt built to run on the build system; ``crosses'' such as \code{gcc-cross}, which is a compiler built to run on the build machine but produces binaries that run on the target \code{MACHINE}; ``nativesdk'', which targets the SDK machine instead of \code{MACHINE}; and ``mulitlibs'' in the form ``\code{multilib}:multilib\_name''.
+
+\medskip
+允许你对配方进行扩展以便构建软件的变体。OpenEmbedded-Core 元数据中的一些配方的变体的示例是有 ``native'' 后缀的，例如 \code{quilt-native}，它是 Quilt 应用程序的一个副本，用来运行在构建系统上；有 ``cross'' 后缀的变体，例如 \code{gcc-cross}，它是一个在构建机器上运行的编译器，但是用来生成在目标机器上运行的二进制文件； 有 ``nativesdk'' 后缀的变体，构建对象则是以 SDK 机器而不是目标机器为目标；至于 ``mulitlibs''，其格式则为 ``\code{multilib}:multilib\_name''。
+
+\medskip
+To build a different variant of the recipe with a minimal amount of code, it usually is as simple as adding the variable to your recipe. Here are two examples. The ``native'' variants are from the OpenEmbedded-Core metadata:
+
+\medskip
+要用最少的代码来构建配方的不同变体，通常只需将变量添加到配方中即可。下面是两个示例。``native'' 变体是来自 OpenEmbedded-Core 的元数据：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BBCLASSEXTEND =+ "native nativesdk"\\
+BBCLASSEXTEND =+ "multilib:multilib\_name"
+}
+\end{codeblock}
+
+\medskip
+\begin{noteblock}{Note}
+Internally, the \bbgls{BBCLASSEXTEND} mechanism generates recipe variants by rewriting variable values and applying overrides such as \code{_class-native}. For example, to generate a native version of a recipe, a \bbgls{DEPENDS} on ``foo'' is rewritten to a \bbgls{DEPENDS} on ``foo-native".
+
+\medskip
+在 BitBake 内部，\bbgls{BBCLASSEXTEND} 的工作原理是通过重写变量值并应用诸如 \code{_class-native} 之类的重写机制来生成配方的变体。例如，要生成配方的本机版本，将基于 ``foo'' 的 \bbgls{DEPENDS} 重写为基于 ``foo-native'' 的 \bbgls{DEPENDS}。
+
+\medskip
+Even when using \bbgls{BBCLASSEXTEND}, the recipe is only parsed once. Parsing once adds some limitations. For example, it is not possible to include a different file depending on the variant, since \code{include} statements are processed when the recipe is parsed.
+
+\medskip
+即使使用 \bbgls{BBCLASSEXTEND}，配方也只会解析一次。这种只解析一次的做法会带来一些限制。例如，无法根据变体的不同来包含不同的文件，因为 \code{include} 语句是在解析配方的时间来处理的。
+\end{noteblock}
+
+}
+
+\glsentry{BBDEBUG}{BBDEBUG}{%
+Sets the BitBake debug output level to a specific value as incremented by the \code{-D} command line option.
+
+\medskip
+将 BitBake 调试输出级别设置为特定值，以 \code{-D} 命令行选项为增量。
+
+\medskip
+\begin{noteblock}{Note}
+You must set this variable in the external environment in order for it to work.
+
+\medskip
+你必须在外部环境中设置此变量才能使其正常工作。
+\end{noteblock}
+
+}
+
+\glsentry{BBFILE_COLLECTIONS}{BBFILE\_COLLECTIONS}{%
+Lists the names of configured layers. These names are used to find the other \code{BBFILE_*} variables. Typically, each layer appends its name to this variable in its \code{conf/layer.conf} file.
+
+\medskip
+列出已经配置的层的名称。这些名称用于查找其他 \code{BBFILE_*} 变量。通常来说，每个层都会将其名称附加到其 \code{conf/layer.conf} 文件中的此变量的后面。
+
+}
+
+\glsentry{BBFILE_PATTERN}{BBFILE\_PATTERN}{%
+Variable that expands to match files from \bbgls{BBFILES} in a particular layer. This variable is used in the \code{conf/layer.conf} file and must be suffixed with the name of the specific layer (e.g. \code{BBFILE_PATTERN_emenlow}).
+
+\medskip
+用来定义对此变量进行扩展的模式用以匹配特定层中 \bbgls{BBFILES} 文件。此变量是在 \code{conf/layer.conf} 文件中使用的，并且必须以特定层的名称作为后缀（例如 \code{BBFILE_PATTERN_emenlow}）。
+
+}
+
+\glsentry{BBFILE_PRIORITY}{BBFILE\_PRIORITY}{%
+Assigns the priority for recipe files in each layer.
+
+\medskip
+为每层中的配方文件分配优先级。
+
+\medskip
+This variable is useful in situations where the same recipe appears in more than one layer. Setting this variable allows you to prioritize a layer against other layers that contain the same recipe — effectively letting you control the precedence for the multiple layers. The precedence established through this variable stands regardless of a recipe's version (\bbgls{PV} variable). For example, a layer that has a recipe with a higher \bbgls{PV} value but for which the \bbgls{BBFILE_PRIORITY} is set to have a lower precedence still has a lower precedence.
+
+\medskip
+此变量在相同配方出现在多个层中的情况下非常有用。设置此变量允许你给予一个层相对于另一个包含相同配方的层更高的优先级 - 这可以有效地让你控制多个层的优先级。通过此变量建立的优先级与配方的版本（\bbgls{PV} 变量）无关。例如，如果配方的 \bbgls{PV} 值较高但 \bbgls{BBFILE_PRIORITY} 的设置为较低优先级，则该层的优先级仍然较低。
+
+\medskip
+A larger value for the \bbgls{BBFILE_PRIORITY} variable results in a higher precedence. For example, the value 6 has a higher precedence than the value 5. If not specified, the \bbgls{BBFILE_PRIORITY} variable is set based on layer dependencies (see the \bbgls{LAYERDEPENDS} variable for more information). The default priority, if unspecified for a layer with no dependencies, is the lowest defined priority + 1 (or 1 if no priorities are defined).
+
+\medskip
+\bbgls{BBFILE_PRIORITY} 变量的值越大，其优先级越高。例如，值 6 的优先级高于值 5。如果未指定，则\linebreak \bbgls{BBFILE_PRIORITY} 变量会根据层的依赖关系来设置（有关详细信息，请参阅 \bbgls{LAYERDEPENDS} 变量）。如果未指定没有依赖关系的层，则默认优先级为最低定义优先级 + 1（如果未定义优先级，则为 1）。
+
+
+\bigskip
+\begin{noteblock}{Tip}%
+You can use the command \code{bitbake-layers show-layers} to list all configured layers along with their priorities.
+
+\medskip
+你可以使用命令 \code{bitbake-layers show-layers} 来列出所有已经配置的层及其优先级。
+\end{noteblock}
+
+}
+
+\glsentry{BBFILES}{BBFILES}{%
+A space-separated list of recipe files BitBake uses to build software.
+
+\medskip
+用于定义 BitBake 用来构建软件的配方文件的列表（以空格来分隔）。
+
+\medskip
+When specifying recipe files, you can pattern match using Python's \href{https://docs.python.org/3/library/glob.html}{glob} syntax. For details on the syntax, see the documentation by following the previous link.
+
+\medskip
+在指定配方文件时，可以使用 Python 的 \href{https://docs.python.org/3/library/glob.html}{glob} 语法来进行模式匹配。有关语法的详细信息，请参阅上一个链接中的文档。
+
+}
+
+\glsentry{BBFILES_DYNAMIC}{BBFILES\_DYNAMIC}{%
+Activates content depending on presence of identified layers. You identify the layers by the collections that the layers define.
+
+\medskip
+根据已确认的层的存在与否来决定是否激活内容。你可以通过所定义的层的集合来确定层的存在与否。
+
+\medskip
+Use the \bbgls{BBFILES_DYNAMIC} variable to avoid \code{.bbappend} files whose corresponding \code{.bb} file is in a layer that attempts to modify other layers through \code{.bbappend} but does not want to introduce a hard dependency on those other layers.
+
+\medskip
+使用 \bbgls{BBFILES_DYNAMIC} 变量可以来避免如下这些配方附加文件(\code{.bbappend}): 与这些配方附加文件 (\code{.bbappend}) 相对应的配方文件 (\code{.bb}) 想通过此配方附加文件 (\code{.bbappend}) 来修改其他层但又不想引入对其他层的必须的依赖性。
+
+\medskip
+Additionally you can prefix the rule with ``!'' to add \code{.bbappend} and \code{.bb} files in case a layer is not present. Use this avoid hard dependency on those other layers.
+
+\medskip
+此外，如果某个层不存在，你还可以在规则前加上 ``!''来添加相对应的 \code{.bbappend} 和 \code{.bb} 文件。 使用这种方法可以避免对其他层的所必须的依赖。
+
+\medskip
+Use the following form for \bbgls{BBFILES_DYNAMIC}:
+
+\medskip
+\bbgls{BBFILES_DYNAMIC} 变量使用以下格式来定义：
+
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+collection\_name:filename\_pattern
+}
+\end{codeblock}
+
+\medskip
+The following example identifies two collection names and two filename patterns:
+
+\medskip
+以下示例定义了两个集合名称和两个文件名模式：
+
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BBFILES\_DYNAMIC += " \textbackslash  \linebreak
+${}$\ \ \ \ clang-layer:\$\{LAYERDIR\}/bbappends/meta-clang/*/*/*.bbappend  \textbackslash  \linebreak
+${}$\ \ \ \ core:\$\{LAYERDIR\}/bbappends/openembedded-core/meta/*/*/*.bbappend  \textbackslash  \linebreak
+"
+}
+\end{codeblock}
+
+\medskip
+When the collection name is prefixed with ``!'' it will add the file pattern in case the layer is absent:
+
+\medskip
+当集合名称以 ``!'' 为前缀时，如果层不存在，它将使用如下的文件模式：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BBFILES\_DYNAMIC += " \textbackslash  \linebreak
+${}$\ \ \ \ !clang-layer:\$\{LAYERDIR\}/backfill/meta-clang/*/*/*.bb  \textbackslash  \linebreak
+"
+}
+\end{codeblock}
+
+\medskip
+This next example shows an error message that occurs because invalid entries are found, which cause parsing to fail:
+
+\medskip
+下一个例子显示了由于发现无效的条目而导致解析失败而出现的错误消息：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+ERROR: BBFILES\_DYNAMIC entries must be of the form \{!\}<collection name>:<filename pattern>, not: \linebreak
+/work/my-layer/bbappends/meta-security-isafw/*/*/*.bbappend \linebreak
+/work/my-layer/bbappends/openembedded-core/meta/*/*/*.bbappend \linebreak
+}
+\end{codeblock}
+
+}
+
+\glsentry{BBINCLUDED}{BBINCLUDED}{%
+Contains a space-separated list of all of all files that BitBake's parser included during parsing of the current file.
+
+\medskip
+包含 BitBake 解析器在解析当前文件期间包含的所有文件的以空格分隔的列表。
+
+}
+
+\glsentry{BBINCLUDELOGS}{BBINCLUDELOGS}{%
+If set to a value, enables printing the task log when reporting a failed task.
+
+\medskip
+如果设置了一个值，则在报告失败的任务时启用打印任务日志。
+
+}
+
+\glsentry{BBINCLUDELOGS_LINES}{BBINCLUDELOGS\_LINES}{%
+If BBINCLUDELOGS is set, specifies the maximum number of lines from the task log file to print when reporting a failed task. If you do not set \bbgls{BBINCLUDELOGS_LINES}, the entire log is printed.
+
+\medskip
+如果设置了 \bbgls{BBINCLUDELOGS} 变量，则指定报告失败任务时要打印的任务日志文件的最大行数。如果未设置 \bbgls{BBINCLUDELOGS_LINES} 变量，则会将打印整个日志文件。
+
+}
+
+\glsentry{BBLAYERS}{BBLAYERS}{%
+Lists the layers to enable during the build. This variable is defined in the \code{bblayers.conf} configuration file in the build directory. Here is an example:
+
+\medskip
+列出构建期间要启用的层。此变量需要在构建目录中的 \code{bblayers.conf} 配置文件中进行定义。以下是示例：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BBLAYERS = "  \textbackslash  \linebreak
+${}$\ \ \ \ /home/scottrif/poky/meta  \textbackslash  \linebreak
+${}$\ \ \ \ /home/scottrif/poky/meta-yocto  \textbackslash  \linebreak
+${}$\ \ \ \ /home/scottrif/poky/meta-yocto-bsp  \textbackslash  \linebreak
+${}$\ \ \ \ /home/scottrif/poky/meta-mykernel  \textbackslash  \linebreak
+"
+}
+\end{codeblock}
+
+\medskip
+This example enables four layers, one of which is a custom, user-defined layer named \code{meta-mykernel}.
+
+\medskip
+此示例启用了四个层，其中一个是名为 \code{meta-mykernel} 的用户自定义层。
+
+}
+
+\glsentry{BBLAYERS_FETCH_DIR}{BBLAYERS\_FETCH\_DIR}{%
+Sets the base location where layers are stored. This setting is used in conjunction with bitbake-layers layerindex-fetch and tells bitbake-layers where to place the fetched layers.
+
+\medskip
+设置层的基本保存位置。此设置与 \code{bitbake-layers layerindex-fetch} 命令一起使用，并告诉 \code{bitbake-layers} 将获取的层放置在何处。
+
+}
+
+\glsentry{BBMASK}{BBMASK}{%
+Prevents BitBake from processing recipes and recipe append files.
+
+\medskip
+此掩码是用来让 BitBake 忽略处理一些特定的配方和配方附加文件。
+
+\medskip
+You can use the \bbgls{BBMASK} variable to ``hide'' these \code{.bb} and \code{.bbappend} files. BitBake ignores any recipe or recipe append files that match any of the expressions. It is as if BitBake does not see them at all. Consequently, matching files are not parsed or otherwise used by BitBake.
+
+\medskip
+你可以使用 \bbgls{BBMASK} 变量来 ``隐藏'' 这些 \code{.bb} 和 \code{.bbappend} 文件 。BitBake 会忽略与表达式相匹配的任何配方或配方附加文件。就好像 BitBake 根本看不见它们一样。因此，BitBake 不会对这些相匹配的文件进行解析或以者其他方式使用。
+
+\medskip
+The values you provide are passed to Python's regular expression compiler. Consequently, the syntax follows Python's Regular Expression (re) syntax. The expressions are compared against the full paths to the files. For complete syntax information, see Python's documentation at \url{http://docs.python.org/3/library/re.html}.
+
+\medskip
+你提供的这些信息会被传递给 Python 的正则表达式编译器。因此，其语法应遵循 Python 的正则表达式 (re) 语法。表达式将与文件的绝对路径进行比较。有关这方面的完整的语法信息，请参阅 Python 文档 \url{http://docs.python.org/3/library/re.html}。
+
+\medskip
+The following example uses a complete regular expression to tell BitBake to ignore all recipe and recipe append files in the meta-ti/recipes-misc/ directory:
+
+\medskip
+下面的例子使用了一个完整的正则表达式来告诉 BitBake 忽略 \code{meta-ti/recipes-misc/} 目录中的所有配方和配方附加文件：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BBMASK = "meta-ti/recipes-misc/"
+}
+\end{codeblock}
+
+\medskip
+If you want to mask out multiple directories or recipes, you can specify multiple regular expression fragments. This next example masks out multiple directories and individual recipes:
+
+\medskip
+如果要屏蔽多个目录或配方，可以指定多个正则表达式片段。下一个例子展示了如何屏蔽多个目录和单个配方：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BBMASK += "/meta-ti/recipes-misc/ meta-ti/recipes-ti/packagegroup/" \linebreak
+BBMASK += "/meta-oe/recipes-support/" \linebreak
+BBMASK += "/meta-foo/.*/openldap" \linebreak
+BBMASK += "opencv.* \textbackslash .bbappend" \linebreak
+BBMASK += "lzma"
+}
+\end{codeblock}
+
+\medskip
+\begin{noteblock}{Note}
+When specifying a directory name, use the trailing slash character to ensure you match just that directory name.
+
+\medskip
+在指定目录名时，请在目录名的后面添加``/''字符来确保表达式仅匹配该目录名。
+\end{noteblock}
+
+}
+
+\glsentry{BBMULTICONFIG}{BBMULTICONFIG}{%
+Enables BitBake to perform multiple configuration builds and lists each separate configuration (multiconfig). You can use this variable to cause BitBake to build multiple targets where each target has a separate configuration. Define \bbgls{BBMULTICONFIG} in your \code{conf/local.conf} configuration file.
+
+\medskip
+此变量能够让 BitBake 执行多个配置构建并列出每个单独的配置（多配置）。你可以使用此变量使 BitBake 构建多个目标，其中每个目标都有单独的配置。你需要在 \code{conf/local.conf} 配置文件中定义此 \bbgls{BBMULTICONFIG} 变量。
+
+\medskip
+As an example, the following line specifies three multiconfigs, each having a separate configuration file:
+
+\medskip
+例如，以下代码指定了三个 multiconfig 配置的名字 ，每个配置都有一个单独的配置文件：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+BBMULTIFONFIG = "configA configB configC"
+}
+\end{codeblock}
+
+\medskip
+Each configuration file you use must reside in the build directory within a directory named \code{conf/multiconfig} (e.g. \code{build_directory/conf/multiconfig/configA.conf}).
+
+\medskip
+你使用的每个配置文件都必须位于构建目录内名为 \code{conf/multiconfig} 的子目录内。例如：\code{build_directory/conf/multiconfig/configA.conf}。
+
+\medskip
+For information on how to use \bbgls{BBMULTICONFIG} in an environment that supports building targets with multiple configurations, see the ``\bbsection{Executing a Multiple Configuration Build}'' section.
+
+\medskip
+有关如何在支持使用多种配置构建目标的环境中使用 \bbgls{BBMULTICONFIG}，请参阅``\bbsections{Executing a Multiple Configuration Build}{执行多配置构建}'' 部分。
+
+}
+
+\glsentry{BBPATH}{BBPATH}{%
+A colon-separated list used by BitBake to locate class (\code{.bbclass}) and configuration (\code{.conf}) files. This variable is analogous to the \code{PATH} variable.
+
+\medskip
+BitBake 用来搜素类 ( \code{.bbclass}) 和配置 ( \code{.conf}) 文件的用冒号分隔的目录列表。此变量类似于 \code{PATH} 变量。
+
+\medskip
+If you run BitBake from a directory outside of the build directory, you must be sure to set \bbgls{BBPATH} to point to the build directory. Set the variable as you would any environment variable and then run BitBake:
+
+\medskip
+如果从构建目录之外的目录运行 BitBake，则必须确保 \bbgls{BBPATH} 设置为将构建目录也包含在内。像设置任何其他环境变量一样设置此变量，然后再运行 ​​BitBake：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+\$ BBPATH="build\_directory" \linebreak
+\$ export BBPATH \linebreak
+\$ bitbake target
+}
+\end{codeblock}
+
+}
+
+\glsentry{BBSERVER}{BBSERVER}{%
+Points to the server that runs memory-resident BitBake. The variable is only used when you employ memory-resident BitBake.
+
+\medskip
+指向以内存驻留方式来运行 BitBake 的服务器。仅当你使用内存驻留方式的 BitBake 时才使用此变量。
+
+}
+
+\glsentry{BBTARGETS}{BBTARGETS}{%
+Allows you to use a configuration file to add to the list of command-line target recipes you want to build.
+
+\medskip
+此变量用来在配置文件中创建一个包含了所有你想要用命令行来构建的目标配方的列表。
+
+}
+
+\glsentry{BITBAKE_UI}{BITBAKE\_UI}{%
+Used to specify the UI module to use when running BitBake. Using this variable is equivalent to using the \code{-u} command-line option.
+
+\medskip
+用于指定运行 BitBake 时使用的 UI 模块。使用此变量相当于使用 \code{-u} 命令行选项。
+
+\medskip
+\begin{noteblock}{Note}
+You must set this variable in the external environment in order for it to work.
+
+\medskip
+你必须在外部环境中设置此变量才能使其发挥作用。
+\end{noteblock}
+
+}
+
+\glsentry{BUILDNAME}{BUILDNAME}{%
+A name assigned to the build. The name defaults to a datetime stamp of when the build was started but can be defined by the metadata.
+
+\medskip
+用来定义分配给构建的名称。该名称默认为构建启动时的日期时间戳，但可以通过元数据定义。
+
+}
+
+\glsentry{BZRDIR}{BZRDIR}{%
+The directory in which files checked out of a Bazaar system are stored.
+
+\medskip
+用来保存从 Bazaar 系统检出的文件的目录。
+
+}
+
+\glsentry{CACHE}{CACHE}{%
+Specifies the directory BitBake uses to store a cache of the metadata so it does not need to be parsed every time BitBake is started.
+
+\medskip
+用来指定 BitBake 用于存储元数据缓存的目录，这样每次启动 BitBake 时就不需要再进行解析。
+
+}
+
+\glsentry{CVSDIR}{CVSDIR}{%
+The directory in which files checked out under the CVS system are stored.
+
+\medskip
+用来保存从 CVS 系统检出的文件的目录。
+
+}
+
+\glsentry{DEFAULT_PREFERENCE}{DEFAULT\_PREFERENCE}{%
+Specifies a weak bias for recipe selection priority.
+
+\medskip
+用来指定配方选择优先级的倾向性。
+
+\medskip
+The most common usage of this is variable is to set it to ``-1'' within a recipe for a development version of a piece of software. Using the variable in this way causes the stable version of the recipe to build by default in the absence of \bbgls{PREFERRED_VERSION} being used to build the development version.
+
+\medskip
+此变量最常见的用法是在用于软件开发版的配方中将其设置为 ``-1''。以这种方式使用此变量会让 BitMake 在未使用 \bbgls{PREFERRED_VERSION} 变量的情况下，当使用稳定版本的配方进行构建时，默认是去构建软件的开发版。
+
+\medskip
+\begin{noteblock}{Note}
+The bias provided by \bbgls{DEFAULT_PREFERENCE} is weak and is overridden by \bbgls{BBFILE_PRIORITY} if that variable is different between two layers that contain different versions of the same recipe.
+
+\medskip
+\bbgls{DEFAULT_PREFERENCE} 提供的倾向性是很弱的， 如果该变量的定义在包含同一配方的不同版本的两个层之间是不同的，则其会被 \bbgls{BBFILE_PRIORITY} 重写。
+\end{noteblock}
+
+}
+
+\glsentry{DEPENDS}{DEPENDS}{%
+Lists a recipe's build-time dependencies (i.e. other recipe files).
+
+\medskip
+用来列出配方的构建时的依赖项（即其他配方文件）。
+
+\medskip
+Consider this simple example for two recipes named ``a'' and ``b'' that produce similarly named packages. In this example, the \bbgls{DEPENDS} statement appears in the ``a'' recipe:
+
+\medskip
+考虑下面这个简单的例子，两个名为 ``a'' 和 ``b'' 的配方生成类似名称的包。在此示例中，\bbgls{DEPENDS} 语句出现在 ``a'' 配方中：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+DEPENDS = "b"
+}
+\end{codeblock}
+
+\medskip
+Here, the dependency is such that the \code{do_configure} task for recipe ``a'' depends on the \code{do_populate_sysroot} task of recipe ``b''. This means anything that recipe ``b'' puts into sysroot is available when recipe ``a'' is configuring itself.
+
+\medskip
+此处的依赖关系是配方 ``a'' 的 \code{do_configure} 任务依赖于配方 ``b''的 \code{do_populate_sysroot} 任务。这意味着配方 ``b'' 放入 sysroot 的任何内容在配方 ``a'' 进行自我配置时都可供配方 ``a'' 来使用。
+
+\medskip
+For information on runtime dependencies, see the \bbgls{RDEPENDS} variable.
+
+\medskip
+有关运行时依赖项的信息，请参阅 \bbgls{RDEPENDS} 变量。
+
+}
+
+\glsentry{DESCRIPTION}{DESCRIPTION}{%
+A long description for the recipe.
+
+\medskip
+该配方的详细描述。
+
+}
+
+\glsentry{DL_DIR}{DL\_DIR}{%
+The central download directory used by the build process to store downloads. By default, \bbgls{DL_DIR} gets files suitable for mirroring for everything except Git repositories. If you want tarballs of Git repositories, use the\linebreak \bbgls{BB_GENERATE_MIRROR_TARBALLS} variable.
+
+\medskip
+用来定义在构建过程用于存储下载内容的主下载目录。默认情况下，\bbgls{DL_DIR} 目录会获取用来给除了 Git 代码仓库之外的所有其他代码仓库做镜像使用的文件。如果你想要获取 Git 代码仓库的 tarball 文件，请使用\linebreak \bbgls{BB_GENERATE_MIRROR_TARBALLS} 变量。
+
+}
+
+\glsentry{EXCLUDE_FROM_WORLD}{EXCLUDE\_FROM\_WORLD}{%
+Directs BitBake to exclude a recipe from world builds (i.e. bitbake world). During world builds, BitBake locates, parses and builds all recipes found in every layer exposed in the \code{bblayers.conf} configuration file.
+
+\medskip
+用来定义需要 BitBake 从构建空间（也就是 bitbake world ）中排除的配方。在 BitBake 的构建空间里，BitBake 会确定、解析和构建在 \code{bblayers.conf} 配置文件中所定义的每个层中找到的所有配方。
+
+\medskip
+To exclude a recipe from a world build using this variable, set the variable to ``1'' in the recipe. Set it to ``0'' to add it back to world build.
+
+\medskip
+要使用此变量将配方从 BitBake 的构建中排除掉，请在配方中将此变量设置为 ``1''。如将其设置为 ``0'' 可将其重新添加到 BitBake 的构建中。
+
+\medskip
+\begin{noteblock}{Note}
+Recipes added to \bbgls{EXCLUDE_FROM_WORLD} may still be built during a world build in order to satisfy dependencies of other recipes. Adding a recipe to \bbgls{EXCLUDE_FROM_WORLD} only ensures that the recipe is not explicitly added to the list of build targets in a world build.
+
+\medskip
+添加到 \bbgls{EXCLUDE_FROM_WORLD} 的配方在为了满足其他配方的依赖关系的情况下，其仍然可以被 BitBake 进行构建。将配方添加到 \bbgls{EXCLUDE_FROM_WORLD} 的目的仅仅是为了确保配方不会被明确地添加到 BitBake 的构建目标列表中。
+
+\end{noteblock}
+}
+
+\glsentry{FAKEROOT}{FAKEROOT}{%
+Contains the command to use when running a shell script in a fakeroot environment\footnotemark[1]. The FAKEROOT variable is obsolete and has been replaced by the other \code{FAKEROOT*} variables. See these entries in the glossary for more information.
+
+\medskip
+用来定义在 fakeroot 环境\footnotemark[1]中运行 shell 脚本时要使用的命令。\bbgls{FAKEROOT} 变量因被其他变量所取代，其已经被淘汰了。有关更多信息，请参阅词汇表中的其他 \code{FAKEROOT*} 条目。
+
+\footnotetext[1]{fakeroot environment: 参见 \url{https://wiki.debian.org/FakeRoot}}
+
+}
+
+
+
+\glsentry{FAKEROOTBASEENV}{FAKEROOTBASEENV}{%
+Lists environment variables to set when executing the command defined by FAKEROOTCMD that starts the bitbake-worker process in the fakeroot environment.
+
+\medskip
+列出执行 \bbgls{FAKEROOTCMD} 变量所定义的命令时要设置的环境变量，该命令在 fakeroot 环境中会启动 bitbake-worker 进程。
+
+}
+
+\glsentry{FAKEROOTCMD}{FAKEROOTCMD}{%
+Contains the command that starts the bitbake-worker process in the fakeroot environment.
+
+\medskip
+用来定义在 fakeroot 环境中启动 bitbake-worker 进程的命令。
+
+}
+
+\glsentry{FAKEROOTDIRS}{FAKEROOTDIRS}{%
+Lists directories to create before running a task in the fakeroot environment.
+
+\medskip
+列出在 fakeroot 环境中运行任务之前要创建的目录。
+
+}
+
+\glsentry{FAKEROOTENV}{FAKEROOTENV}{%
+Lists environment variables to set when running a task in the fakeroot environment. For additional information on environment variables and the fakeroot environment, see the FAKEROOTBASEENV variable.
+
+\medskip
+列出在 fakeroot 环境中运行任务时要设置的环境变量。有关环境变量和 fakeroot 环境的更多信息，请参阅 \bbgls{FAKEROOTBASEENV} 变量。
+
+}
+
+\glsentry{FAKEROOTNOENV}{FAKEROOTNOENV}{%
+Lists environment variables to set when running a task that is not in the fakeroot environment. For additional information on environment variables and the fakeroot environment, see the FAKEROOTENV variable.
+
+\medskip
+列出不在 fakeroot 环境中运行的任务时所要设置的环境变量。有关环境变量和 fakeroot 环境的更多信息，请参阅 \bbgls{FAKEROOTENV} 变量。
+
+}
+
+\glsentry{FETCHCMD}{FETCHCMD}{%
+Defines the command the BitBake fetcher module executes when running fetch operations. You need to use an override suffix when you use the variable (e.g. \code{FETCHCMD_git} or \code{FETCHCMD_svn}).
+
+\medskip
+用来定义 BitBake fetcher 模块在运行 fetch 操作时执行的命令。在针对不同的版本控制系统使用此变量时，需要使用重写后缀（例如\code{FETCHCMD_git} 或 \code{FETCHCMD_svn}）。
+
+}
+
+\glsentry{FILE}{FILE}{%
+Points at the current file. BitBake sets this variable during the parsing process to identify the file being parsed. BitBake also sets this variable when a recipe is being executed to identify the recipe file.
+
+\medskip
+用来指向当前在解析的文件。BitBake 在解析过程中设置此变量以识别正在解析的文件。BitBake 还会在执行配方时设置此变量以识别正在执行的配方文件。
+
+}
+
+\glsentry{FILE_LAYERNAME}{FILE\_LAYERNAME}{%
+During parsing and task execution, this is set to the name of the layer containing the recipe file. Code can use this to identify which layer a recipe is from.
+
+\medskip
+在 BitBake 解析和任务执行期间，此值被设置为包含当前配方文件的层的名称。代码可以使用它来识别配方来自哪个层。
+
+}
+
+\glsentry{FILESPATH}{FILESPATH}{%
+Specifies directories BitBake uses when searching for patches and files. The ``local'' fetcher module uses these directories when handling \code{file://} URLs. The variable behaves like a shell \code{PATH} environment variable. The value is a colon-separated list of directories that are searched left-to-right in order.
+
+\medskip
+用来指定 BitBake 在搜索补丁和文件时使用的目录。“本地” fetcher 模块在处理 \code{file://} 这类 URL 时会使用这些目录。该变量的行为类似于 shell \code{PATH} 环境变量。该值是一个以冒号分隔的目录列表，BitBake 会按照从左到右的顺序进行搜索。
+
+}
+
+\glsentry{GITDIR}{GITDIR}{%
+The directory in which a local copy of a Git repository is stored when it is cloned.
+
+\medskip
+用来制定在克隆 Git 代码仓库时存储其本地副本的目录。
+
+}
+
+\glsentry{HGDIR}{HGDIR}{%
+The directory in which files checked out of a Mercurial system are stored.
+
+\medskip
+用来指定存储从 Mercurial 系统检出的文件的目录。
+
+}
+
+\glsentry{HOMEPAGE}{HOMEPAGE}{%
+Website where more information about the software the recipe is building can be found.
+
+\medskip
+用来定义可以找到有关该配方正在构建的软件的更多信息的网站。
+
+}
+
+\glsentry{INHERIT}{INHERIT}{%
+Causes the named class or classes to be inherited globally. Anonymous functions in the class or classes are not executed for the base configuration and in each individual recipe. The OpenEmbedded build system ignores changes to \bbgls{INHERIT} in individual recipes.
+
+\medskip
+用来指定需要全局继承的类的名称的列表。BitBake 不会在在基本配置文件和单独的配方中执行类中的匿名函数。OpenEmbedded 构建系统会忽略单个配方中对 \bbgls{INHERIT} 的更改。
+
+\medskip
+For more information on INHERIT, see the ``\bbsection{INHERIT Configuration Directive}'' section.
+
+\medskip
+有关INHERIT的更多信息，请参阅 ``\bbsections{INHERIT Configuration Directive}{INHERIT 配置指令}'' 部分。
+
+}
+
+\glsentry{LAYERDEPENDS}{LAYERDEPENDS}{%
+Lists the layers, separated by spaces, upon which this recipe depends. Optionally, you can specify a specific layer version for a dependency by adding it to the end of the layer name with a colon, (e.g. ``anotherlayer:3'' to be compared against \bbgls{LAYERVERSION}\code{_anotherlayer} in this case). BitBake produces an error if any dependency is missing or the version numbers do not match exactly (if specified).
+
+\medskip
+用来列出此配方所依赖的层，层的名称之间用空格进行分隔。 你也可以通过在层名称末尾添加冒号来指定依赖项的特定层版本（例如，“anotherlayer:3”，可以与 \code{LAYERVERSION_anotherlayer} 这种格式进行比较）。如果缺少依赖项的定义或版本号与所指定的不完全匹配，BitBake 会报告错误。
+
+\medskip
+You use this variable in the \code{conf/layer.conf} file. You must also use the specific layer name as a suffix to the variable (e.g. \code{LAYERDEPENDS_mylayer}).
+
+\medskip
+你可以在 \code{conf/layer.conf} 文件中使用此变量。你还必须使用特定的层名称作为变量的后缀（例如 \code{LAYERDEPENDS_mylayer}）。
+
+}
+
+\glsentry{LAYERDIR}{LAYERDIR}{%
+When used inside the layer.conf configuration file, this variable provides the path of the current layer. This variable is not available outside of layer.conf and references are expanded immediately when parsing of the file completes.
+
+\medskip
+当在 \code{layer.conf} 配置文件中使用时，此变量用来提供当前层的路径。此变量在 \code{layer.conf} 文件之外是不可用的，对此变量的引用在文件解析完成后会立即进行扩展。
+
+}
+
+\glsentry{LAYERDIR_RE}{LAYERDIR\_RE}{%
+When used inside the layer.conf configuration file, this variable provides the path of the current layer, escaped for use in a regular expression (\bbgls{BBFILE_PATTERN}). This variable is not available outside of layer.conf and references are expanded immediately when parsing of the file completes.
+
+\medskip
+当在 \code{layer.conf} 配置文件中使用时，此变量用来提供当前层的路径，转义后可用于正则表达式 ( 参见 \bbgls{BBFILE_PATTERN} )。此变量在 \code{layer.conf} 文件之外是不可用的，在文件解析完成后，对此变量的引用会立即进行展开。
+
+}
+
+\glsentry{LAYERSERIES_COMPAT}{LAYERSERIES\_COMPAT}{%
+Lists the versions of the OpenEmbedded-Core (OE-Core) for which a layer is compatible. Using the \bbgls{LAYERSERIES_COMPAT} variable allows the layer maintainer to indicate which combinations of the layer and OE-Core can be expected to work. The variable gives the system a way to detect when a layer has not been tested with new releases of OE-Core (e.g. the layer is not maintained).
+
+\medskip
+用来列出与当前层所兼容的 OpenEmbedded-Core (OE-Core) 版本。使用 \bbgls{LAYERSERIES_COMPAT} 变量允许层的维护者表明哪些层和 OE-Core 的组合可以正常工作。该变量为系统提供了一种方法来检测当前层是否使用了新版本的 OE-Core 进行测试（例如，如果没有用最新的版本进行测试，则该层没有得到有效的维护）。
+
+\medskip
+To specify the OE-Core versions for which a layer is compatible, use this variable in your layer's \code{conf/layer.conf} configuration file. For the list, use the Yocto Project release name (e.g. ``kirkstone'', ``mickledore''). To specify multiple OE-Core versions for the layer, use a space-separated list:
+
+\medskip
+要指定层兼容的 OE-Core 版本，请在层的 \code{conf/layer.conf} 配置文件中使用此变量。请使用 Yocto Project 版本名称（例如“kirkstone”、“mickledore”）来作为列表的一部分。要为层指定多个 OE-Core 版本，请使用空格分隔的列表：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+LAYERSERIES\_COMPAT\_layer\_root\_name = "kirkstone mickledore"
+}
+\end{codeblock}
+
+\medskip
+\begin{noteblock}{Note}%
+Setting \bbgls{LAYERSERIES_COMPAT} is required by the Yocto Project Compatible version 2 standard. The OpenEmbedded build system produces a warning if the variable is not set for any given layer.
+
+\medskip
+"Yocto Project Compatible" 版本 2 的标准中要求设置 \bbgls{LAYERSERIES_COMPAT} 。如果未为任何给定层设置该变量，OpenEmbedded 构建系统则会发出警告。
+\end{noteblock}
+
+}
+
+\glsentry{LAYERVERSION}{LAYERVERSION}{%
+Optionally specifies the version of a layer as a single number. You can use this variable within \bbgls{LAYERDEPENDS} for another layer in order to depend on a specific version of the layer.
+
+\medskip
+可选择将层的版本指定为单个数字。你也可以在 \bbgls{LAYERDEPENDS} 变量中将此变量用于另一个层，以便使其依赖于该层的某一个特定版本。
+
+\medskip
+You use this variable in the \code{conf/layer.conf} file. You must also use the specific layer name as a suffix to the variable (e.g. \code{LAYERDEPENDS_mylayer}).
+
+\medskip
+你可以在 \code{conf/layer.conf} 文件中使用此变量。你还必须使用特定的层名称来作为此变量的后缀（例如 \code{LAYERDEPENDS_mylayer}）。
+
+}
+
+\glsentry{LICENSE}{LICENSE}{%
+The list of source licenses for the recipe.
+
+\medskip
+定义该配方的的源许可证列表。
+
+}
+
+\glsentry{MIRRORS}{MIRRORS}{%
+Specifies additional paths from which BitBake gets source code. When the build system searches for source code, it first tries the local download directory. If that location fails, the build system tries locations defined by \bbgls{PREMIRRORS}, the upstream source, and then locations specified by \bbgls{MIRRORS} in that order.
+
+\medskip
+用来指定 BitBake 获取源代码的其他路径。当构建系统搜索源代码时，它首先尝试本地下载目录。如果该位置搜索失败，构建系统将按顺序尝试由\bbgls{PREMIRRORS} 变量所定义的位置、上游源，然后尝试由 \bbgls{MIRRORS} 变量所指定的位置。
+
+}
+
+\glsentry{OVERRIDES}{OVERRIDES}{%
+A colon-separated list that BitBake uses to control what variables are overridden after BitBake parses recipes and configuration files.
+
+\medskip
+用来定义一个由 BitBake 使用的用冒号分隔来分隔的列表，此列表用于控制哪些变量在 BitBake 解析配方和配置文件后会被重写。
+
+\medskip
+Following is a simple example that uses an overrides list based on machine architectures: \code{OVERRIDES = ``arm:x86:mips:powerpc''} You can find information on how to use \bbgls{OVERRIDES} in the ``\bbsection{Conditional Syntax (Overrides)}'' section.
+
+\medskip
+下面是一个使用基于目标机器架构的重写列表的简单示例：\code{OVERRIDES = “arm:x86:mips:powerpc"}。 你可以在 ``\bbsections{Conditional Syntax (Overrides)}{条件语法（重写）}'' 部分找到有关如何使用 \bbgls{OVERRIDES} 的信息。
+
+}
+
+\glsentry{P4DIR}{P4DIR}{%
+The directory in which a local copy of a Perforce depot is stored when it is fetched.
+
+\medskip
+用于保存从获取 Perforce 代码仓库所获取的本地副本时的目录。
+
+}
+
+\glsentry{PACKAGES}{PACKAGES}{%
+The list of packages the recipe creates.
+
+\medskip
+该配方创建的软件包的列表。
+
+}
+
+\glsentry{PACKAGES_DYNAMIC}{PACKAGES\_DYNAMIC}{%
+A promise that your recipe satisfies runtime dependencies for optional modules that are found in other recipes. \bbgls{PACKAGES_DYNAMIC} does not actually satisfy the dependencies, it only states that they should be satisfied. For example, if a hard, runtime dependency (RDEPENDS) of another package is satisfied during the build through the \bbgls{PACKAGES_DYNAMIC} variable, but a package with the module name is never actually produced, then the other package will be broken.
+
+\medskip
+对你的配方能够满足其他配方中可选模块的运行时依赖关系的一种承诺。\bbgls{PACKAGES_DYNAMIC} 实际上并不满足依赖关系，它仅声明这些依赖关系应该能够被满足。例如，如果在构建过程中通过 \code{PACKAGES_DYNAMIC} 变量满足了另一个包的运行时的所必需的依赖关系 (\bbgls{RDEPENDS}) ，但从未实际生成具有该模块名称的包，则另一个包的构建过程将被破坏。
+
+}
+
+\glsentry{PE}{PE}{%
+The epoch of the recipe. By default, this variable is unset. The variable is used to make upgrades possible when the versioning scheme changes in some backwards incompatible way.
+
+\medskip
+配方的年代。默认情况下，此变量未被设置。此变量用于当版本控制方案以某种向后不兼容的方式发生变化时，使得软件包的升级成为可能。
+
+}
+
+\glsentry{PERSISTENT_DIR}{PERSISTENT\_DIR}{%
+Specifies the directory BitBake uses to store data that should be preserved between builds. In particular, the data stored is the data that uses BitBake's persistent data API and the data used by the \bbgls{PR} Server and \bbgls{PR} Service.
+
+\medskip
+指定 BitBake 用于存储在不同构建之间应保留的数据的目录。具体来说，存储的数据是使用 BitBake 的持久数据 API 的数据以及版本（\bbgls{PR}）服务器和版本 (\bbgls{PR}) 服务使用的数据。
+
+}
+
+\glsentry{PF}{PF}{%
+Specifies the recipe or package name and includes all version and revision numbers (i.e. \code{eglibc-2.13-r20+svnr15508/} and \code{bash-4.2-r1/}).
+
+\medskip
+用来指定配方或包的包含所有版本和修订号的名称，例如 \code{eglibc-2.13-r20+svnr15508/} 和 \code{bash-4.2-r1/}。
+
+}
+
+\glsentry{PN}{PN}{%
+The recipe name.
+
+\medskip
+配方的名称
+
+}
+
+\glsentry{PR}{PR}{%
+The revision of the recipe.
+
+\medskip
+配方的修订版本号。
+
+}
+
+\glsentry{PREFERRED_PROVIDER}{PREFERRED\_PROVIDER}{%
+Determines which recipe should be given preference when multiple recipes provide the same item. You should always suffix the variable with the name of the provided item, and you should set it to the \bbgls{PN} of the recipe to which you want to give precedence. Some examples:
+
+\medskip
+当有多个配方提供相同的物品时，确定应优先考虑哪个配方。你应始终在变量后加上所提供物品的名称，并将其设置为要优先考虑的配方的 \bbgls{PN}。下面是一些示例：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+PREFERRED\_PROVIDER\_virtual/kernel ?= "linux-yocto"\\
+PREFERRED\_PROVIDER\_virtual/xserver = "xserver-xf86"\\
+PREFERRED\_PROVIDER\_virtual/libgl ?= "mesa"
+}
+\end{codeblock}
+
+}
+
+\glsentry{PREFERRED_PROVIDERS}{PREFERRED\_PROVIDERS}{%
+Determines which recipe should be given preference for cases where multiple recipes provide the same item. Functionally, \bbgls{PREFERRED_PROVIDERS} is identical to \bbgls{PREFERRED_PROVIDER}. However, the\linebreak \bbgls{PREFERRED_PROVIDERS} variable lets you define preferences for multiple situations using the following form:
+
+\medskip
+确定在多个配方都能提供相同物品的情况下应优先考虑哪个配方。功能上， \bbgls{PREFERRED_PROVIDERS} 与 \bbgls{PREFERRED_PROVIDER} 相同 。但是，\bbgls{PREFERRED_PROVIDERS} 变量允许你使用以下形式为多种情况定义首选项：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+PREFERRED\_PROVIDERS = "xxx:yyy aaa:bbb ..."
+}
+\end{codeblock}
+
+\medskip
+This form is a convenient replacement for the following:
+
+\medskip
+下面的代码可以方便地替代上面的列表：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+PREFERRED\_PROVIDER\_xxx = "yyy"\\
+PREFERRED\_PROVIDER\_aaa = "bbb"
+}
+\end{codeblock}
+
+}
+
+\glsentry{PREFERRED_VERSION}{PREFERRED\_VERSION}{%
+If there are multiple versions of a recipe available, this variable determines which version should be given preference. You must always suffix the variable with the \bbgls{PN} you want to select, and you should set \bbgls{PV} accordingly for precedence.
+
+\medskip
+如果配方有多个版本可用，则此变量决定应优先考虑哪个版本。你必须始终在变量后加上要选择的 \bbgls{PN} ，并且应相应地对 \bbgls{PV} 进行设置以获得优先权。
+
+\medskip
+The \bbgls{PREFERRED_VERSION} variable supports limited wildcard use through the ``\%" character. You can use the character to match any number of characters, which can be useful when specifying versions that contain long revision numbers that potentially change. Here are two examples:
+
+\medskip
+\bbgls{PREFERRED_VERSION} 变量通过 “\%” 字符来支持有限的通配符使用。你可以使用该字符来匹配任意数量的字符，这在用来指定一个包含将来可能会更改的长修订号的版本时非常有用。以下是两个例子：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+PREFERRED\_VERSION\_python = "2.7.3"\\
+PREFERRED\_VERSION\_linux-yocto = "4.12\%"
+}
+\end{codeblock}
+
+\medskip
+\begin{noteblock}{Important}
+The use of the `` \% `` character is limited in that it only works at the end of the string. You cannot use the wildcard character in any other location of the string.
+
+\medskip
+``\%'' 字符的使用受到一定的限制，因为它只能在字符串的末尾使用。你不能在字符串的任何其他位置使用此通配符。
+\end{noteblock}
+
+\medskip
+If a recipe with the specified version is not available, a warning message will be shown. See \bbgls{REQUIRED_VERSION} if you want this to be an error instead.
+
+\medskip
+如果此变量所指定版本的配方不可用，BitBake 则会显示警告消息。如果你希望 BitBake 将此作为一个错误来报告，请参阅 \bbgls{REQUIRED_VERSION}。
+
+}
+
+\glsentry{PREMIRRORS}{PREMIRRORS}{%
+Specifies additional paths from which BitBake gets source code. When the build system searches for source code, it first tries the local download directory. If that location fails, the build system tries locations defined by \bbgls{PREMIRRORS}, the upstream source, and then locations specified by \bbgls{MIRRORS} in that order.
+
+\medskip
+用来指定 BitBake 获取源代码的其他路径。当构建系统搜索源代码时，它首先尝试本地下载目录。如果在该目录中搜索失败，构建系统将按顺序尝试由\bbgls{PREMIRRORS} 定义的目录位置、上游源，然后再尝试由 \bbgls{MIRRORS} 指定的目录位置。
+
+\medskip
+Typically, you would add a specific server for the build system to attempt before any others by adding something like the following to your configuration:
+
+\medskip
+通常你可以通过在构建配置中添加如下内容来为构建系统添加一个特定的服务器，以便 BitBake 在搜索其他服务器之前先搜索此服务器的目录：
+
+\medskip
+\begin{codeblock}
+\footnotesize\texttt{\noindent
+PREMIRRORS:prepend = " \textbackslash  \linebreak
+git://.*/.* http://downloads.yoctoproject.org/mirror/sources/  \textbackslash  \linebreak
+ftp://.*/.* http://downloads.yoctoproject.org/mirror/sources/  \textbackslash  \linebreak
+http://.*/.* http://downloads.yoctoproject.org/mirror/sources/  \textbackslash  \linebreak
+https://.*/.* http://downloads.yoctoproject.org/mirror/sources/"
+}
+\end{codeblock}
+
+\medskip
+These changes cause the build system to intercept Git, FTP, HTTP, and HTTPS requests and direct them to the \code{http://} sources mirror. You can use \code{file://} URLs to point to local directories or network shares as well.
+
+\medskip
+这些更改会导致构建系统对 Git、FTP、HTTP 和 HTTPS 请求进行拦截并将其重新定向到上面所定义的 \code{http://} 镜像。你也可以使用 \code{file://} URL 将其指向本地的目录或网络共享目录。
+
+}
+
+\glsentry{PROVIDES}{PROVIDES}{%
+A list of aliases by which a particular recipe can be known. By default, a recipe's own \bbgls{PN} is implicitly already in its \bbgls{PROVIDES} list. If a recipe uses \bbgls{PROVIDES}, the additional aliases are synonyms for the recipe and can be useful satisfying dependencies of other recipes during the build as specified by DEPENDS.
+
+\medskip
+用来定义配方的别名的列表，这样 BitBake 可以通过别名来了解某特定配方。在默认情况下，配方自己的 \bbgls{PN} 已经隐式地包含在其 \bbgls{PROVIDES} 变量定义的别名列表中。如果配方使用 \bbgls{PROVIDES} 所定义的别名 ，则列表中的其他别名则是该配方的同义词，同样可以用于满足在构建过程中 \bbgls{DEPENDS} 变量所指定的与其他配方的依赖关系 。
+
+\medskip
+Consider the following example \bbgls{PROVIDES} statement from a recipe file \code{libav_0.8.11.bb}:
+
+\medskip
+请参考下面的来自配方文件 \code{libav_0.8.11.bb} 中的 \bbgls{PROVIDES} 声明语句的例子：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+PROVIDES += "libpostproc"
+}
+\end{codeblock}
+
+\medskip
+The \bbgls{PROVIDES} statement results in the ``libav'' recipe also being known as ``libpostproc''.
+
+\medskip
+此例中的 \bbgls{PROVIDES} 表明 ``libav'' 配方也可以被称作 ``libpostproc'' 配方，
+
+\medskip
+In addition to providing recipes under alternate names, the \bbgls{PROVIDES} mechanism is also used to implement virtual targets. A virtual target is a name that corresponds to some particular functionality (e.g. a Linux kernel). Recipes that provide the functionality in question list the virtual target in \bbgls{PROVIDES}. Recipes that depend on the functionality in question can include the virtual target in \bbgls{DEPENDS} to leave the choice of provider open.
+
+\medskip
+除了给配方提供替代名称外， \bbgls{PROVIDES} 变量的这种机制还可以用于实现虚拟目标。虚拟目标是与某些特定功能（例如 Linux 内核）相对应的名称。提供相关功能的配方在会使用 \bbgls{PROVIDES} 变量来列出虚拟目标。依赖于相关功能的配方可以在 \bbgls{DEPENDS} 变量中包含这些虚拟目标来给用户提供不同的软件包提供者以供选择。
+
+\medskip
+Conventionally, virtual targets have names on the form ``virtual/function" (e.g. ``virtual/kernel"). The slash is simply part of the name and has no syntactical significance.
+
+\medskip
+按照惯例，虚拟目标的名称格式为 ``virtual/function''（例如 ``virtual/kernel''）。斜线 ``/'' 符号只是虚拟名称的一部分，没有任何语法意义。
+
+}
+
+\glsentry{PRSERV_HOST}{PRSERV\_HOST}{%
+The network based PR service host and port.
+
+\medskip
+基于网络的版本 (\bbgls{PR}) 服务主机和端口。
+
+\medskip
+Following is an example of how the \bbgls{PRSERV_HOST} variable is set:
+
+\medskip
+以下是一个如何设置 \bbgls{PRSERV_HOST} 变量的示例：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+PRSERV\_HOST = "localhost:0"
+}
+\end{codeblock}
+
+\medskip
+You must set the variable if you want to automatically start a local PR service. You can set \bbgls{PRSERV_HOST} to other values to use a remote PR service.
+
+\medskip
+如果要自动启动本地 版本（\bbgls{PR}） 服务，则必须设置该变量。你可以将 \bbgls{PRSERV_HOST} 设置为其他值以便使用远程版本 (\bbgls{PR}) 服务。
+
+}
+
+\glsentry{PV}{PV}{%
+The version of the recipe.
+
+\medskip
+配方的版本信息。
+
+}
+
+\glsentry{RDEPENDS}{RDEPENDS}{%
+Lists a package's runtime dependencies (i.e. other packages) that must be installed in order for the built package to run correctly. If a package in this list cannot be found during the build, you will get a build error.
+
+\medskip
+列出软件包在运行时所需要的依赖项（即其他包），这些依赖项必须安装在目标主机上才能使构建的包正确运行。如果在构建过程中找不到此列表定义的软件包，BitBake 将报告构建错误。
+
+\medskip
+Because the \bbgls{RDEPENDS} variable applies to packages being built, you should always use the variable in a form with an attached package name. For example, suppose you are building a development package that depends on the \code{perl} package. In this case, you would use the following \bbgls{RDEPENDS} statement:
+
+\medskip
+由于 \bbgls{RDEPENDS} 变量适用于正在构建的包，因此在使用此变量的时间，应始终将软件包的名字附加到此变量上去。例如，假设你正在构建依赖于 perl 软件包的开发包。在这种情况下，你应该以下面的格式来使用 \bbgls{RDEPENDS} 变量：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+RDEPENDS:\$\{PN\}-dev += "perl"
+}
+\end{codeblock}
+
+\medskip
+In the example, the development package depends on the \code{perl} package. Thus, the \bbgls{RDEPENDS} variable has the \code{${PN}-dev} package name as part of the variable.
+
+\medskip
+在这个示例中，开发包依赖于 perl 软件包。因此，\bbgls{RDEPENDS} 变量将 \code{${PN}-dev} 软件包的名称作为此变量的一部分。
+
+\medskip
+BitBake supports specifying versioned dependencies. Although the syntax varies depending on the packaging format, BitBake hides these differences from you. Here is the general syntax to specify versions with the \bbgls{RDEPENDS} variable:
+
+\medskip
+BitBake 也支持为依赖性来指定特定版本。尽管定义变量的语法因软件包的打包格式而异，但 BitBake 会对你隐藏这些差异。以下是使用 \bbgls{RDEPENDS} 变量来指定依赖性版本的语法：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent%
+RDEPENDS:\$\{PN\} = "package (operator version)"
+}
+\end{codeblock}
+
+\medskip
+For \code{operator}, you can specify the following:
+
+\medskip
+对于 \code{operator}，你可以使用下面的操作符：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+= \\
+< \\
+> \\
+<= \\
+>=
+}
+\end{codeblock}
+
+\medskip
+For example, the following sets up a dependency on version 1.2 or greater of the package \code{foo}:
+
+\medskip
+下面的例子是用来设置对软件包\code{foo}  1.2 版或更高版本的依赖关系：
+
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent%
+RDEPENDS:\$\{PN\} = "foo (>= 1.2)"
+}
+\end{codeblock}
+
+\medskip
+For information on build-time dependencies, see the \bbgls{DEPENDS} variable.
+
+\medskip
+有关构建时的依赖项的信息，请参阅 \bbgls{DEPENDS} 变量。
+
+}
+
+\glsentry{REPODIR}{REPODIR}{%
+The directory in which a local copy of a google-repo directory is stored when it is synced.
+
+\medskip
+用来在同步 google-repo 目录时存储其本地副本的目录。
+
+}
+
+\glsentry{REQUIRED_VERSION}{REQUIRED\_VERSION}{%
+If there are multiple versions of a recipe available, this variable determines which version should be given preference. \bbgls{REQUIRED_VERSION} works in exactly the same manner as \bbgls{PREFERRED_VERSION}, except that if the specified version is not available then an error message is shown and the build fails immediately.
+
+\medskip
+如果配方有多个版本可用，则此变量决定应优先使用哪个版本。\bbgls{REQUIRED_VERSION} 的工作方式与\linebreak \bbgls{PREFERRED_VERSION} 完全相同，不同之处在于，如果指定的版本不可用，则BitBake 会显示错误消息并且构建会立即失败。
+
+\medskip
+If both \bbgls{REQUIRED_VERSION} and \bbgls{PREFERRED_VERSION} are set for the same recipe, the \bbgls{REQUIRED_VERSION} value applies.
+
+\medskip
+如果为同一配方同时设置了 \bbgls{REQUIRED_VERSION} 和 \bbgls{PREFERRED_VERSION} ，BitBake 会选择使用\linebreak \bbgls{REQUIRED_VERSION} 值。
+
+}
+
+\glsentry{RPROVIDES}{RPROVIDES}{%
+A list of package name aliases that a package also provides. These aliases are useful for satisfying runtime dependencies of other packages both during the build and on the target (as specified by \bbgls{RDEPENDS}).
+
+\medskip
+软件包还提供的软件包名称的别名的列表。这些别名对于满足构建期间和目标机器上其他软件包的运行时依赖关系很有用（由 \bbgls{RDEPENDS} 指定）。
+
+\medskip
+As with all package-controlling variables, you must always use the variable in conjunction with a package name override. Here is an example:
+
+\medskip
+与所有软件包的控制变量一样，你必须始终将该变量与软件包名称的重写结合使用。以下是一个示例：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+RPROVIDES:\$\{PN\} = "widget-abi-2"
+}
+\end{codeblock}
+
+}
+
+\glsentry{RRECOMMENDS}{RRECOMMENDS}{%
+A list of packages that extends the usability of a package being built. The package being built does not depend on this list of packages in order to successfully build, but needs them for the extended usability. To specify runtime dependencies for packages, see the \bbgls{RDEPENDS} variable.
+
+\medskip
+此变量用来定义一个扩展了正在构建的软件包的可用性的软件包的列表。正在构建的软件包在不依赖于此列表中的软件包的情况下即可成功构建，但需要它们来扩展可用性。要指定软件包的运行时依赖项，请参阅 \bbgls{RDEPENDS} 变量。
+
+\medskip
+BitBake supports specifying versioned recommends. Although the syntax varies depending on the packaging format, BitBake hides these differences from you. Here is the general syntax to specify versions with the \bbgls{RRECOMMENDS} variable:
+
+\medskip
+BitBake 支持指定版本的推荐。尽管定义变量的语法因软件包的打包格式而异，但 BitBake 会对你隐藏这些差异。以下是使用 \bbgls{RRECOMMENDS} 变量来推荐特定版本的软件包的一般语法：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+RRECOMMENDS:\$\{PN\} = "package (operator version)"
+}
+\end{codeblock}
+
+\medskip
+For operator, you can specify the following:
+
+\medskip
+对于 \code{operator}，你可以使用下面的操作符：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+=\\
+<\\
+>\\
+<=\\
+>=
+}
+\end{codeblock}
+
+\medskip
+For example, the following sets up a recommend on version 1.2 or greater of the package \code{foo}:
+
+\medskip
+下面的例子展示了如何设置此变量以使用软件包 \code{foo} 的 1.2 或更高版本：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+RRECOMMENDS:\$\{PN\} = "foo (>= 1.2)"
+}
+\end{codeblock}
+
+}
+
+\glsentry{SECTION}{SECTION}{%
+The section in which packages should be categorized.
+
+\medskip
+定义软件包应该被分类到哪个部分。
+
+}
+
+\glsentry{SRC_URI}{SRC\_URI}{%
+The list of source files — local or remote. This variable tells BitBake which bits to pull for the build and how to pull them. For example, if the recipe or append file needs to fetch a single tarball from the Internet, the recipe or append file uses a \bbgls{SRC_URI} entry that specifies that tarball. On the other hand, if the recipe or append file needs to fetch a tarball, apply two patches, and include a custom file, the recipe or append file needs an \bbgls{SRC_URI} variable that specifies all those sources.
+
+\medskip
+用来列出本地或远程的源文件。此变量告诉 BitBake 需要为构建提取哪些文件以及如何提取它们。例如，如果配方或附加文件需要从 Internet 获取单个 tarball 文件，则配方或附加文件使用 \bbgls{SRC_URI} 变量来指定该 tarball 的位置。另一方面，如果配方或附加文件需要获取 tarball 文件、应用两个补丁文件并包含一个自定义文件，则配方或附加文件需要 \code{SRC_URI} 变量来指定所有这些源文件的位置。
+
+\medskip
+The following list explains the available URI protocols. URI protocols are highly dependent on particular BitBake Fetcher submodules. Depending on the fetcher BitBake uses, various URL parameters are employed. For specifics on the supported Fetchers, see the ``\bbsection{Fetchers}'' section.
+
+\medskip
+以下列表解释了当前可用的 URI 协议。URI 协议高度依赖于特定的 BitBake Fetcher 子模块。根据 BitBake 所使用的 fetcher 的不同，其 bURL 参数也有所不同。有关 BitBake 支持的 fetcher 的详细信息，请参阅 ``\bbsection{Fetchers}'' 部分。
+
+\medskip
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \code{az://}: Fetches files from an Azure Storage account using HTTPS.
+
+\medskip
+使用 HTTPS 从 Azure 存储帐户获取文件
+
+\item \code{bzr://}: Fetches files from a Bazaar revision control repository.
+
+\medskip
+从 Bazaar 版本控制代码仓库中获取文件
+
+\item \code{ccrc://}: Fetches files from a ClearCase repository.
+
+\medskip
+从 ClearCase 代码仓库获取文件。
+
+\item \code{cvs://}: Fetches files from a CVS revision control repository.
+
+\medskip
+从 CVS 版本控制代码仓库获取文件。
+
+\item \code{file://}: Fetches files, which are usually files shipped with the Metadata, from the local machine. The path is relative to the \bbgls{FILESPATH} variable. Thus, the build system searches, in order, from the following directories, which are assumed to be a subdirectories of the directory in which the recipe file (\code{.bb}) or append file (\code{.bbappend}) resides:
+
+\medskip
+从本地计算机获取文件，这些文件通常是随元数据一起提供的文件。文件的路径是相对于 \bbgls{FILESPATH} 变量的相对路径。因此，构建系统会按顺序从以下目录中搜索，这些目录假定为配方文件 (\code{.bb}) 或附加文件 (\code{.bbappend}) 所在目录的子目录：
+
+\medskip
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \code{${BPN}}: the base recipe name without any special suffix or version numbers.
+
+\medskip
+基本配方名称，不带任何特殊后缀或版本号。
+
+\item \code{${BP}} - \code{${BPN}-${PV}}: the base recipe name and version but without any special package name suffix.
+
+\medskip
+基本配方名称和版本，但没有任何特殊的包名称后缀。
+
+\item \code{files}: files within a directory, which is named \code{files} and is also alongside the recipe or append file.
+
+\medskip
+在一个名为 \code{files} 的目录中的文件，此 \code{files} 目录是与配方或附加文件在同一目录里面。
+\end{itemize}
+
+\item \code{ftp://}: Fetches files from the Internet using FTP.
+
+\medskip
+使用 FTP 从互联网获取文件。
+
+\item \code{git://}: Fetches files from a Git revision control repository.
+
+\medskip
+从 Git 代码仓库中获取文件。
+
+\item \code{gitsm://}: Fetches submodules from a Git revision control repository.
+
+\medskip
+从 Git 代码仓库中获取子模块。
+
+\item \code{hg://}: Fetches files from a Mercurial (hg) revision control repository.
+
+\medskip
+从 Mercurial ( hg) 代码仓库中获取文件。
+
+\item \code{http://}: Fetches files from the Internet using HTTP.
+
+\medskip
+使用 HTTP 从互联网获取文件。
+
+\item \code{https://}: Fetches files from the Internet using HTTPS.
+
+\medskip
+使用 HTTPS 从互联网获取文件。
+
+\item \code{npm://}: Fetches JavaScript modules from a registry.
+
+\medskip
+从 npm 登记表中获取 JavaScript 模块。
+
+\item \code{osc://}: Fetches files from an OSC (OpenSUSE Build service) revision control repository.
+
+\medskip
+从 OSC（OpenSUSE Build 服务）代码中获取文件。
+
+\item \code{p4://}: Fetches files from a Perforce (p4) revision control repository.
+
+\medskip
+从 Perforce ( p4) 代码中获取文件。
+
+\item \code{repo://}: Fetches files from a repo (Git) repository.
+
+\medskip
+从 repo（Git）代码仓库获取文件。
+
+\item \code{ssh://}: Fetches files from a secure shell.
+
+\medskip
+从 ssh 服务器获取文件
+
+\item \code{svn://}: Fetches files from a Subversion (svn) revision control repository.
+
+\medskip
+从 Subversion（svn）代码仓库中获取文件。
+\end{itemize}
+
+\medskip
+Here are some additional options worth mentioning:
+
+\medskip
+以下是一些值得一提的附加选项：
+
+\medskip
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \code{downloadfilename}: Specifies the filename used when storing the downloaded file.\par
+用来指定保存下载文件时使用的文件名。
+
+\item \code{name}: Specifies a name to be used for association with \bbgls{SRC_URI} checksums or \bbgls{SRCREV} when you have more than one file or git repository specified in \bbgls{SRC_URI}. For example: \par
+当 \bbgls{SRC_URI} 变量中指定了多个文件或 git 代码仓库时，指定用于与 \bbgls{SRC_URI} 的校验和或 \bbgls{SRCREV} 相关联的名称。例如：
+
+\medskip
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+SRC\_URI = "git://example.com/foo.git;branch=main;name=first  \textbackslash  \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ git://example.com/bar.git;branch=main;name=second  \textbackslash  \linebreak
+${}$\ \ \ \ \ \ \ \ \ \ \ http://example.com/file.tar.gz;name=third" \linebreak
+\linebreak
+SRCREV\_first = "f1d2d2f924e986ac86fdf7b36c94bcdf32beec15" \linebreak
+SRCREV\_second = "e242ed3bffccdf271b7fbaf34ed72d089537b42f" \linebreak
+SRC\_URI[third.sha256sum] = "13550350a8681c84c861aac2e5b440161c2b33a3e4f302ac680ca5b686de48de" \linebreak
+}
+\end{codeblock}
+
+\medskip
+\item \code{subdir}: Places the file (or extracts its contents) into the specified subdirectory. This option is useful for unusual tarballs or other archives that do not have their files already in a subdirectory within the archive. \par
+将文件（或提取的其内容）放入指定的子目录中。此选项对于不常见的 tarball 或其他档案非常有用，因为这些档案中的文件尚未位于档案内的子目录中。
+
+\item \code{subpath}: Limits the checkout to a specific subpath of the tree when using the Git fetcher is used.\par
+使用 Git fetcher 时仅仅检出代码树中的特定子路径部分的代码。
+
+\item \code{unpack}: Controls whether or not to unpack the file if it is an archive. The default action is to unpack the file. \par
+控制文件为存档时是否解压文件。默认操作是解压文件。
+\end{itemize}
+
+}
+
+\glsentry{SRCDATE}{SRCDATE}{%
+The date of the source code used to build the package. This variable applies only if the source was fetched from a Source Code Manager (SCM).
+
+\medskip
+用于构建软件包的源代码的日期。仅当源代码是从源代码管理器 (SCM) 获取时，此变量才是有用的。
+
+}
+
+\glsentry{SRCREV}{SRCREV}{%
+The revision of the source code used to build the package. This variable applies only when using Subversion, Git, Mercurial and Bazaar. If you want to build a fixed revision and you want to avoid performing a query on the remote repository every time BitBake parses your recipe, you should specify a \bbgls{SRCREV} that is a full revision identifier and not just a tag.
+
+\medskip
+用于构建软件包的源代码的版本信息。此变量仅在使用 Subversion、Git、Mercurial 和 Bazaar 时适用。如果你想要构建固定的修订版本，并且想要避免每次 BitBake 解析你的配方时都对远程代码仓库进行查询，则应设定 \bbgls{SRCREV} 变量为一个完整的版本标识符，而不仅仅是一个标签。
+
+}
+
+\glsentry{SRCREV_FORMAT}{SRCREV\_FORMAT}{%
+Helps construct valid \bbgls{SRCREV} values when multiple source controlled URLs are used in \bbgls{SRC_URI}.
+
+\medskip
+当 \bbgls{SRC_URI} 变量中使用多个源控制 URL 时， 此变量会帮助构建有效的 \bbgls{SRCREV} 值。
+
+\medskip
+The system needs help constructing these values under these circumstances. Each component in the \bbgls{SRC_URI} is assigned a name and these are referenced in the \bbgls{SRCREV_FORMAT} variable. Consider an example with URLs named ``machine'' and ``meta''. In this case, \bbgls{SRCREV_FORMAT} could look like ``machine\_meta'' and those names would have the SCM versions substituted into each position. Only one \code{AUTOINC} placeholder is added and if needed. And, this placeholder is placed at the start of the returned string.
+
+\medskip
+在这种情况下，系统需要一些帮助来构建这些值。\bbgls{SRC_URI} 中的每个组件都会分配一个名称，这些名称在 \bbgls{SRCREV_FORMAT} 变量中被引用。考虑一个名为 ``machine'' 和 ``meta'' 的 URL 的示例。在这种情况下， \bbgls{SRCREV_FORMAT} 可能看起来像 ``machine\_meta''，并且这些名称将在每个位置来替换 SCM 版本。如果需要，只需添加一个 \code{AUTOINC} 占位符即可。并且，此占位符放置在返回字符串的开头。
+
+}
+
+\glsentry{STAMP}{STAMP}{%
+Specifies the base path used to create recipe stamp files. The path to an actual stamp file is constructed by evaluating this string and then appending additional information.
+
+\medskip
+用于指定用于创建配方戳记文件的基本路径。实际戳记文件的路径是通过对此字符串进行评估然后再附加其他信息来构建的。
+
+}
+
+\glsentry{STAMPCLEAN}{STAMPCLEAN}{%
+Specifies the base path used to create recipe stamp files. Unlike the \bbgls{STAMP} variable, \bbgls{STAMPCLEAN} can contain wildcards to match the range of files a clean operation should remove. BitBake uses a clean operation to remove any other stamps it should be removing when creating a new stamp.
+
+\medskip
+指定用于创建配方戳记文件的基本路径。与 \bbgls{STAMP} 变量不同，\bbgls{STAMPCLEAN} 可以包含通配符以匹配清理操作应删除的文件范围。BitBake 使用清理操作来删除在创建新戳记时应删除的任何其他戳记。
+
+}
+
+\glsentry{SUMMARY}{SUMMARY}{%
+A short summary for the recipe, which is 72 characters or less.
+
+\medskip
+配方的简短摘要，不能超过 72 个字符。
+
+}
+
+\glsentry{SVNDIR}{SVNDIR}{%
+The directory in which files checked out of a Subversion system are stored.
+
+\medskip
+用来保存从 Subversion 系统检出的文件的目录。
+
+}
+
+\glsentry{T}{T}{%
+Points to a directory were BitBake places temporary files, which consist mostly of task logs and scripts, when building a particular recipe.
+
+\medskip
+此变量所指向的目录是 BitBake 在构建特定配方时用来放置临时文件的地方，这些临时文件主要由任务日志和脚本组成。
+
+}
+
+\glsentry{TOPDIR}{TOPDIR}{%
+Points to the build directory. BitBake automatically sets this variable.
+
+\medskip
+此变量用来指向构建目录。BitBake 会自动设置此变量。
+
+}

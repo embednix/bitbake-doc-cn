@@ -1,0 +1,694 @@
+\newchapter{Execution}{执行}
+
+The primary purpose for running BitBake is to produce some kind of output such as a single installable package, a kernel, a software development kit, or even a full, board-specific bootable Linux image, complete with bootloader, kernel, and root filesystem. Of course, you can execute the \code{bitbake} command with options that cause it to execute single tasks, compile single recipe files, capture or clear data, or simply return information about the execution environment.
+
+运行 BitBake 的主要目的是生成某种输出，例如单个可安装的软件包、内核、软件开发工具包，甚至是完整的、基于特定开发板的可引导的 Linux 镜像，包括引导加载程序、内核和根文件系统。当然，你可以在运行 \code{bitbake} 的时间使用一些命令选项，使其来执行单个任务、编译单个配方文件、捕获或清除数据，或者只是返回有关执行环境的一些信息。
+
+This chapter describes BitBake's execution process from start to finish when you use it to create an image. The execution process is launched using the following command form:
+
+本章介绍了使用 BitBake 创建镜像时从头到尾的执行过程。执行过程是使用以下命令形式来启动的：
+
+\begin{pyglist}
+$ bitbake target
+\end{pyglist}
+
+For information on the BitBake command and its options, see ``\bbsection{The BitBake Command}'' section.
+
+有关 BitBake 命令及其选项的信息，请参阅``\bbsections{The BitBake Command}{BitBake 命令}''部分。
+
+\begin{noteblock}{Note}%
+Prior to executing BitBake, you should take advantage of available parallel thread execution on your build host by setting the \bbgls{BB_NUMBER_THREADS} variable in your project's \code{local.conf} configuration file.
+
+\medskip
+在执行 BitBake 之前，你应该通过在项目的配置文件 \code{local.conf} 中设置 \bbgls{BB_NUMBER_THREADS} 变量来充分利用构建主机上所支持的并行线程来加快构建过程。
+
+\medskip
+A common method to determine this value for your build host is to run the following:
+
+\medskip
+确定构建主机所支持的最大并行线程数的常用方法是运行以下命令：
+
+\medskip
+\begin{pyglist}
+$ grep processor /proc/cpuinfo
+\end{pyglist}
+
+\medskip
+This command returns the number of processors, which takes into account hyper-threading. Thus, a quad-core build host with hyper-threading most likely shows eight processors, which is the value you would then assign to \bbgls{BB_NUMBER_THREADS}.
+
+\medskip
+此命令返回处理器的数值是已经考虑了对超线程的支持。因此，拥有支持超线程的四核CPU的构建主机很可能显示是有八个处理器，这是你分配给 \bbgls{BB_NUMBER_THREADS} 的值。
+
+\medskip
+A possibly simpler solution is that some Linux distributions (e.g. Debian and Ubuntu) provide the \code{ncpus} command.
+
+\medskip
+一个可能更简单的解决方案是运行某些 Linux 发行版（例如 Debian 和 Ubuntu）所提供的 \code{ncpus} 命令。
+
+\end{noteblock}
+
+\newsection{Parsing the Base Configuration Metadata}{解析基础配置元数据}
+
+The first thing BitBake does is parse base configuration metadata. Base configuration metadata consists of your project's \code{bblayers.conf} file to determine what layers BitBake needs to recognize, all necessary \code{layer.conf} files (one from each layer), and \code{bitbake.conf}. The data itself is of various types:
+
+BitBake 做的第一件事是解析基本配置元数据。基本配置元数据由项目的用来确定 BitBake 需要识别哪些层的 \code{bblayers.conf} 文件，所有必要的 \code{layer.conf} 文件（每个层都有一个）和 \code{bitbake.conf} 文件组成。这些数据的本身具有多种类型：
+
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{Recipes:} Details about particular pieces of software.
+
+\medskip
+\textbf{配方:} 有关特定软件的详细信息。
+
+\item \textbf{Class Data:} An abstraction of common build information (e.g. how to build a Linux kernel).
+
+\medskip
+\textbf{类数据:} 对公共构建信息的抽象描述（例如如何构建 Linux 内核）。
+
+\item \textbf{Configuration Data:} Machine-specific settings, policy decisions, and so forth. Configuration data acts as the glue to bind everything together.
+
+\medskip
+\textbf{配置数据:} 对与特定目标机器的设置、策略决策等。这些配置数据在这里充当将所有内容粘合在一起的粘合剂。
+
+\end{itemize}
+
+The \code{layer.conf} files are used to construct key variables such as \bbgls{BBPATH} and \bbgls{BBFILES}. \bbgls{BBPATH} is used to search for configuration and class files under the \code{conf} and \code{classes} directories, respectively. \bbgls{BBFILES} is used to locate both recipe and recipe append files (\code{.bb} and \code{.bbappend}). If there is no \code{bblayers.conf} file, it is assumed the user has set the \bbgls{BBPATH} and \bbgls{BBFILES} directly in the environment.
+
+这些 \code{layer.conf} 文件用于构造一些关键变量，例如 \bbgls{BBPATH} 和 \bbgls{BBFILES}。 \bbgls{BBPATH} 是用于搜索分别位于 \code{conf} 和 \code{classes} 目录下的配置文件和类文件。\bbgls{BBFILES} 是用于定位配方和配方附加文件（\code{.bb} 和 \code{.bbappend} 文件）。如果没有 \code{bblayers.conf} 文件，BitBake 则假定用户直接在运行环境中设置了 \bbgls{BBPATH} 和 \bbgls{BBFILES} 这两个变量。
+
+Next, the \code{bitbake.conf} file is located using the \bbgls{BBPATH} variable that was just constructed. The \code{bitbake.conf} file may also include other configuration files using the \code{include} or \code{require} directives.
+
+接下来，BitBake 使用刚刚构建的 \bbgls{BBPATH} 变量来定位 \code{bitbake.conf} 文件。该 \code{bitbake.conf} 文件还可能使用 \code{include} 或 \code{require} 指令来包含其他配置文件。
+
+Prior to parsing configuration files, BitBake looks at certain variables, including:
+
+在解析配置文件之前，BitBake 还会查看其他某些变量，包括：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \bbgls{BB_ENV_PASSTHROUGH}
+
+\item \bbgls{BB_ENV_PASSTHROUGH_ADDITIONS}
+
+\item \bbgls{BB_PRESERVE_ENV}
+
+\item \bbgls{BB_ORIGENV}
+
+\item \bbgls{BITBAKE_UI}
+\end{itemize}
+
+The first four variables in this list relate to how BitBake treats shell environment variables during task execution. By default, BitBake cleans the environment variables and provides tight control over the shell execution environment. However, through the use of these first four variables, you can apply your control regarding the environment variables allowed to be used by BitBake in the shell during execution of tasks. See the ``\bbsection{Passing Information Into the Build Task Environment}'' section and the information about these variables in the variable glossary for more information on how they work and on how to use them.
+
+此列表中的前四个变量与 BitBake 在任务执行期间如何处理 shell 环境变量有关。默认情况下，BitBake 会对环境变量进行清理并且对 shell 执行环境进行严格控制。但是，通过使用这前四个变量，你可以对 BitBake 在任务执行期间所被允许使用的 shell 环境变量进行控制。有关这些变量如何工作以及如何使用它们的更多信息，请参阅``\bbsections{Passing Information Into the Build Task Environment}{将信息传递到构建任务环境}''部分以及变量术语表中有关这些变量的相关信息。
+
+The base configuration metadata is global and therefore affects all recipes and tasks that are executed.
+
+基本配置元数据是全局性的，因此对它们的改动会影响所有执行的配方和任务。
+
+BitBake first searches the current working directory for an optional \code{conf/bblayers.conf} configuration file. This file is expected to contain a \bbgls{BBLAYERS} variable that is a space-delimited list of `layer' directories. Recall that if BitBake cannot find a \code{bblayers.conf} file, then it is assumed the user has set the \bbgls{BBPATH} and \bbgls{BBFILES} variables directly in the environment.
+
+BitBake 首先在当前工作目录中搜索可选的 \code{conf/bblayers.conf} 配置文件。该文件应该包含有 \bbgls{BBLAYERS} 变量，该变量值是一个以空格分隔的`层'目录的列表。回想一下前面所提到的，如果 BitBake 找不到 \code{bblayers.conf} 文件，则会假定用户已直接在运行环境中设置了 \bbgls{BBPATH} 和 \bbgls{BBFILES}变量。
+
+For each directory (layer) in this list, a \code{conf/layer.conf} file is located and parsed with the \bbgls{LAYERDIR} variable being set to the directory where the layer was found. The idea is these files automatically set up \bbgls{BBPATH} and other variables correctly for a given build directory.
+
+对于此列表中的每个目录（层），BitBake 将对 \code{conf/layer.conf} 进行定位并解析；同时将 \bbgls{LAYERDIR} 变量设置为找到该 \code{conf/layer.conf}的目录。这个想法是使用这些文件自动为给定的构建目录正确地设置 \bbgls{BBPATH} 和其他变量。
+
+BitBake then expects to find the \code{conf/bitbake.conf} file somewhere in the user-specified \bbgls{BBPATH}. That configuration file generally has \code{include} directives to pull in any other metadata such as files specific to the architecture, the machine, the local environment, and so forth.
+
+然后 BitBake 期望在用户指定的 \bbgls{BBPATH} 变量中包含的某个目录位置中找到 \code{conf/bitbake.conf} 文件。该配置文件通常使用 \code{include} 指令来把任何其他相关的元数据，例如用于特定体系结构、目标机器、本地环境等的文件都包含进来。
+
+Only variable definitions and \code{include} directives are allowed in BitBake \code{.conf} files. Some variables directly influence BitBake's behavior. These variables might have been set from the environment depending on the environment variables previously mentioned or set in the configuration files. The ``\bbsection{Variables Glossary}'' chapter presents a full list of variables.
+
+BitBake 的 \code{.conf} 文件中仅允许包括变量定义和 \code{include} 指令。其中的一些变量会直接影响 BitBake 的行为。这些变量有可能是已经在环境中设置好的了，具体情况取决于前面提到的或者在配置文件中设置的环境变量。 ``\bbsections{Variables Glossary}{变量术语表}''一章提供了变量的完整列表。
+
+
+After parsing configuration files, BitBake uses its rudimentary inheritance mechanism, which is through class files, to inherit some standard classes. BitBake parses a class when the \code{inherit} directive responsible for getting that class is encountered.
+
+在解析配置文件后，BitBake 会使用其基本的继承机制，即通过类文件，来继承一些标准的类。当遇到负责获取该类的 \code{inherit} 指令时，BitBake 则会解析该类。
+
+The \code{base.bbclass} file is always included. Other classes that are specified in the configuration using the \bbgls{INHERIT} variable are also included. BitBake searches for class files in a classes subdirectory under the paths in \bbgls{BBPATH} in the same way as configuration files.
+
+\code{base.bbclass} 文件始终是被包含在内的。配置文件中通过 \bbgls{INHERIT} 变量所指定的其他的类也是包含在内的。 BitBake 以与搜索配置文件相同的方式在\bbgls{BBPATH} 路径下的 \code{classes} 子目录中搜索相应的类文件。
+
+A good way to get an idea of the configuration files and the class files used in your execution environment is to run the following BitBake command:
+
+了解执行环境中所使用的配置文件和类文件的一个好方法是运行以下 BitBake 命令：
+
+\begin{pyglist}
+$ bitbake -e > mybb.log
+\end{pyglist}
+
+Examining the top of the \code{mybb.log} shows you the many configuration files and class files used in your execution environment.
+
+\code{mybb.log} 文件的头部的注释部分会显示执行环境中使用的许多配置文件和类文件。
+
+\begin{noteblock}{Note}%
+You need to be aware of how BitBake parses curly braces. If a recipe uses a closing curly brace within the function and the character has no leading spaces, BitBake produces a parsing error. If you use a pair of curly braces in a shell function, the closing curly brace must not be located at the start of the line without leading spaces.
+
+\medskip
+你需要了解 BitBake 如何解析花括号。如果配方在函数内使用右花括号并且字符没有前导空格，则 BitBake 会产生解析错误。如果在 shell 函数中使用一对花括号，则右花括号不得位于没有前导空格的行的开头。
+
+\medskip
+Here is an example that causes BitBake to produce a parsing error:
+
+\medskip
+以下是导致 BitBake 产生解析错误的示例：
+
+\medskip
+\begin{pyglist}
+fakeroot create_shar() {
+   cat << "EOF" > ${SDK_DEPLOY}/${TOOLCHAIN_OUTPUTNAME}.sh
+usage()
+{
+   echo "test"
+   ######  The following "}" at the start of the line causes a parsing error ######
+}
+EOF
+}
+\end{pyglist}
+
+\medskip
+Writing the recipe this way avoids the error:
+
+\medskip
+按照下面的格式来编写配方文件则会避免上面的错误：
+
+\medskip
+\begin{pyglist}
+fakeroot create_shar() {
+   cat << "EOF" > ${SDK_DEPLOY}/${TOOLCHAIN_OUTPUTNAME}.sh
+usage()
+{
+   echo "test"
+   ###### The following "}" with a leading space at the start of the line avoids the error ######
+   }
+EOF
+}
+\end{pyglist}
+\end{noteblock}
+
+\newsection{Locating and Parsing Recipes}{定位和解析配方}
+
+During the configuration phase, BitBake will have set \bbgls{BBFILES}. BitBake now uses it to construct a list of recipes to parse, along with any append files (\code{.bbappend}) to apply. BBFILES is a space-separated list of available files and supports wildcards. An example would be:
+
+在配置阶段，BitBake 将对 \bbgls{BBFILES} 变量进行设置。 BitBake 现在使用此变量来构建要解析的配方列表，以及要应用的任何附加文件 (\code{.bbappend} )。\bbgls{BBFILES} 变量是一个用空格作为分隔符的可用文件的列表，并支持通配符。一个例子是：
+
+\begin{pyglist}
+BBFILES = "/path/to/bbfiles/*.bb /path/to/appends/*.bbappend"
+\end{pyglist}
+
+BitBake parses each recipe and append file located with \bbgls{BBFILES} and stores the values of various variables into the datastore.
+
+BitBake 解析定义于 \bbgls{BBFILES} 变量中的每个配方和附加文件，并将各种变量的赋值都存储到数据存储中。
+
+\begin{noteblock}{Note}%
+Append files are applied in the order they are encountered in \bbgls{BBFILES}.
+
+\medskip
+附加文件是按照它们在 \bbgls{BBFILES} 中遇到的顺序来进行应用的。
+\end{noteblock}
+
+For each file, a fresh copy of the base configuration is made, then the recipe is parsed line by line. Any inherit statements cause BitBake to find and then parse class files (\code{.bbclass}) using \bbgls{BBPATH} as the search path. Finally, BitBake parses in order any append files found in \bbgls{BBFILES}.
+
+对于每个文件，BitBake 都会创建一个基本配置的新的副本，然后再对配方进行逐行解析。任何继承语句都会导致 BitBake 使用 \bbgls{BBPATH} 作为搜索路径来查找并解析要继承的类文件 ( \code{.bbclass}) 。最后，BitBake 按照顺序来对在 \bbgls{BBFILES} 中找到的任何附加文件进行解析。
+
+One common convention is to use the recipe filename to define pieces of metadata. For example, in \code{bitbake.conf} the recipe name and version are used to set the variables \bbgls{PN} and \bbgls{PV}:
+
+一种常见的约定是使用配方文件的文件名来定义元数据片段。例如，在 \code{bitbake.conf} 文件中，配方的名称和版本中用于设置变量 \bbgls{PN} 和 \bbgls{PV}：
+
+\begin{pyglist}
+PN = "${@bb.parse.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
+PV = "${@bb.parse.vars_from_file(d.getVar('FILE', False),d)[1] or '1.0'}"
+\end{pyglist}
+
+In this example, a recipe called ``something\_1.2.3.bb'' would set \bbgls{PN} to ``\code{something}'' and \bbgls{PV} to ``\code{1.2.3}''.
+
+在此示例中，一个名为 ``something\_1.2.3.bb'' 的配方会将 \bbgls{PN} 设置为 ``\code{something}''，将 \bbgls{PV} 设置为 ``\code{1.2.3}''。
+
+By the time parsing is complete for a recipe, BitBake has a list of tasks that the recipe defines and a set of data consisting of keys and values as well as dependency information about the tasks.
+
+当 BitBake 对配方的解析完成时，BitBake 拥有了一个由配方所定义的任务列表和一组由键和值组成的数据以及有关任务的依赖关系的信息。
+
+BitBake does not need all of this information. It only needs a small subset of the information to make decisions about the recipe. Consequently, BitBake caches the values in which it is interested and does not store the rest of the information. Experience has shown it is faster to re-parse the metadata than to try and write it out to the disk and then reload it.
+
+BitBake 并不需要所有的这些信息。它只需要一小部分信息就可以做出有关配方的决策。因此，BitBake 只会将它感兴趣的值保存到缓存里面，并且不会保存其余的信息。经验表明，重新解析元数据比尝试将其写入磁盘然后重新加载要快的多。
+
+Where possible, subsequent BitBake commands reuse this cache of recipe information. The validity of this cache is determined by first computing a checksum of the base configuration data (see \bbgls{BB_HASHCONFIG_IGNORE_VARS}) and then checking if the checksum matches. If that checksum matches what is in the cache and the recipe and class files have not changed, BitBake is able to use the cache. BitBake then reloads the cached information about the recipe instead of reparsing it from scratch.
+
+后续 BitBake 命令会在尽可能的情况下重新使用这些配方的缓存信息。该缓存的有效性是通过首先计算基本配置数据的校验和值（请参阅 \bbgls{BB_HASHCONFIG_IGNORE_VARS}）然后再检查校验和值是否匹配来确定的。如果该校验和值与缓存中的内容相匹配，并且配方和类文件都未更改，则 BitBake 能够继续使用这些缓存。然后，BitBake 重新加载有关配方的缓存信息，而不是从头开始重新解析。
+
+Recipe file collections exist to allow the user to have multiple repositories of \code{.bb} files that contain the same exact package. For example, one could easily use them to make one's own local copy of an upstream repository, but with custom modifications that one does not want upstream. Here is an example:
+
+配方文件集合的存在是为了允许用户拥有包含相同软件包的 \code{.bb} 配方文件的多个文件代码仓库。例如，人们可以轻松地使用它们来制作自己的上游代码仓库的本地副本，并在其之上进行一些上游库不能做的自定义修改。参见下面的例子：
+
+\begin{pyglist}
+BBFILES = "/stuff/openembedded/*/*.bb /stuff/openembedded.modified/*/*.bb"
+BBFILE_COLLECTIONS = "upstream local"
+BBFILE_PATTERN_upstream = "^/stuff/openembedded/"
+BBFILE_PATTERN_local = "^/stuff/openembedded.modified/"
+BBFILE_PRIORITY_upstream = "5"
+BBFILE_PRIORITY_local = "10"
+\end{pyglist}
+
+
+\begin{noteblock}{Note}%
+The layers mechanism is now the preferred method of collecting code. While the collections code remains, its main use is to set layer priorities and to deal with overlap (conflicts) between layers.
+
+\medskip
+选择现有的层机制现在是将代码收集在一起的首选方法。虽然代码的集合仍然存在，但其主要用途是设置层的优先级和处理层之间的重叠（冲突）问题。
+
+\end{noteblock}
+
+\newsection{Providers}{提供者}
+
+Assuming BitBake has been instructed to execute a target and that all the recipe files have been parsed, BitBake starts to figure out how to build the target. BitBake looks through the \bbgls{PROVIDES} list for each of the recipes. A \bbgls{PROVIDES} list is the list of names by which the recipe can be known. Each recipe's \bbgls{PROVIDES} list is created implicitly through the recipe's PN variable and explicitly through the recipe's \bbgls{PROVIDES} variable, which is optional.
+
+假设 BitBake 被指示去执行一个目标的构建，并且所有的配方文件均已被解析，BitBake 则需要开始弄清楚它需要如何去构建目标。 BitBake 会查看每个配方的 \bbgls{PROVIDES} 变量所定义的列表。从 \bbgls{PROVIDES} 变量所定义的列表中可以得知配方的名称的列表。每个配方的 \bbgls{PROVIDES} 所定义的列表是通过配方的 \bbgls{PN} 变量来隐式创建的，并可以通过配方的 \bbgls{PROVIDES} 变量（该变量是可选的，不是必须的）来进行显式创建。
+
+When a recipe uses  \bbgls{PROVIDES}, that recipe's functionality can be found under an alternative name or names other than the implicit \bbgls{PN} name. As an example, suppose a recipe named \code{keyboard_1.0.bb} contained the following:
+
+当配方使用 \bbgls{PROVIDES} 变量时，用户可以使用定义在隐式 \bbgls{PN} 名称之外的一个或多个替代名称来找到该配方。例如，假设名为 \code{keyboard_1.0.bb} 的配方包含以下内容：
+
+\begin{pyglist}
+PROVIDES += "fullkeyboard"
+\end{pyglist}
+
+The \bbgls{PROVIDES} list for this recipe becomes ``keyboard'', which is implicit, and ``fullkeyboard'', which is explicit. Consequently, the functionality found in \code{keyboard_1.0.bb} can be found under two different names.
+
+此配方的 \bbgls{PROVIDES} 列表则变为 ``keyboard''（隐式）和 ``fullkeyboard''（显式）两个名称。因此，\code{keyboard_1.0.bb} 可以在两个不同的名称下找到它所提供的功能。
+
+\newsection{Preferences}{偏好设置}
+
+The \bbgls{PROVIDES} list is only part of the solution for figuring out a target's recipes. Because targets might have multiple providers, BitBake needs to prioritize providers by determining provider preferences.
+
+\bbgls{PROVIDES} 变量所提供的列表只是找出构建目标配方的解决方案的一部分。由于所构建的目标可能有多个提供者，BitBake 需要通过确定用户对提供者的偏好来确定这些提供者的优先级。
+
+A common example in which a target has multiple providers is ``virtual/kernel'', which is on the \bbgls{PROVIDES} list for each kernel recipe. Each machine often selects the best kernel provider by using a line similar to the following in the machine configuration file:
+
+构建目标具有多个提供者的一个常见示例是 ``virtual/kernel''，它位于每个内核配方的 \bbgls{PROVIDES} 变量中。每台机器通常通过在目标机器配置文件中使用类似于以下内容的行来选择最佳的内核模块提供者：
+
+\begin{pyglist}
+PREFERRED_PROVIDER_virtual/kernel = "linux-yocto"
+\end{pyglist}
+
+The default \bbgls{PREFERRED_PROVIDER} is the provider with the same name as the target. BitBake iterates through each target it needs to build and resolves them and their dependencies using this process.
+
+默认的 \bbgls{PREFERRED_PROVIDER} 变量的值是与目标同名的提供者。 BitBake 会对构建所需的每个目标进行迭代，并使用此过程来解析它们及其所依赖的其他依赖项。
+
+Understanding how providers are chosen is made complicated by the fact that multiple versions might exist for a given provider. BitBake defaults to the highest version of a provider. Version comparisons are made using the same method as Debian. You can use the \bbgls{PREFERRED_VERSION} variable to specify a particular version. You can influence the order by using the \bbgls{DEFAULT_PREFERENCE} variable.
+
+由于提供者所提供的软件包可能存在多个版本，因此理解如何选择提供者就会变得非常复杂。 BitBake 默认是使用提供者所提供的最高版本的软件包。版本比较的方法是采用与 Debian 所采用的相同的方法。你可以使用 \bbgls{PREFERRED_VERSION} 变量来指定特定版本。你也可以使用 \bbgls{DEFAULT_PREFERENCE} 变量来影响优先顺序。
+
+By default, files have a preference of ``0''. Setting \bbgls{DEFAULT_PREFERENCE} to ``-1'' makes the recipe unlikely to be used unless it is explicitly referenced. Setting \bbgls{DEFAULT_PREFERENCE} to ``1'' makes it likely the recipe is used. \bbgls{PREFERRED_VERSION} overrides any \bbgls{DEFAULT_PREFERENCE} setting. \bbgls{DEFAULT_PREFERENCE} is often used to mark newer and more experimental recipe versions until they have undergone sufficient testing to be considered stable.
+
+默认情况下，配方文件的首选项为“0”。将 \bbgls{DEFAULT_PREFERENCE} 变量设置为 ``-1'' 时会使配方只有在明确引用它的情况下才能被使用。将配方的 \bbgls{DEFAULT_PREFERENCE} 变量设置为 ``1'' 才有可能使 BitBake 会使用该配方。\bbgls{PREFERRED_VERSION} 变量的赋值会重写任何 \bbgls{DEFAULT_PREFERENCE} 变量的设置\footnotemark[1]。\bbgls{DEFAULT_PREFERENCE} 变量通常用于标记一个比现有版本更新的且更具实验性的配方版本，直到它们经过足够的测试才能被认为是一个稳定的的版本。
+
+\footnotetext[1]{也就是说，在选择哪一个供应者的时间，\bbgls{PREFERRED_VERSION} 比 \bbgls{DEFAULT_PREFERENCE} 具有更高的优先级。}
+
+When there are multiple ``versions'' of a given recipe, BitBake defaults to selecting the most recent version, unless otherwise specified. If the recipe in question has a \bbgls{DEFAULT_PREFERENCE} set lower than the other recipes (default is 0), then it will not be selected. This allows the person or persons maintaining the repository of recipe files to specify their preference for the default selected version. Additionally, the user can specify their preferred version.
+
+当给定配方有多个``版本''时，BitBake 默认是选择最新的版本，除非另有说明。如果相关配方的 \bbgls{DEFAULT_PREFERENCE} 设置低于其他配方（默认值为 0），BitBake则不会选择该配方。这允许维护配方文件代码仓库的一个或多个人员指定他们对默认选定版本的偏好。此外，用户也可以使用此法来指定他们自己的首选版本。
+
+If the first recipe is named \code{a_1.1.bb}, then the \bbgls{PN} variable will be set to ``a'', and the \bbgls{PV} variable will be set to 1.1.
+
+如果第一个配方名为 \code{a_1.1.bb}，则 \bbgls{PN} 变量将设置为``a''， \bbgls{PV} 变量将设置为 1.1。
+
+Thus, if a recipe named \code{a_1.2.bb} exists, BitBake will choose 1.2 by default. However, if you define the following variable in a \code{.conf} file that BitBake parses, you can change that preference:
+
+因此，如果存在名为 \code{a_1.2.bb} 的配方，BitBake 将默认选择 1.2。但是，如果你在 BitBake 所解析的 \code{.conf} 文件中定义了以下变量，则可以更改该首选项：
+
+\begin{pyglist}
+PREFERRED_VERSION_a = "1.1"
+\end{pyglist}
+
+\begin{noteblock}{Note}%
+
+It is common for a recipe to provide two versions – a stable, numbered (and preferred) version, and a version that is automatically checked out from a source code repository that is considered more ``bleeding edge'' but can be selected only explicitly.
+
+\medskip
+配方文件通常是提供两个版本——一个稳定的、有版本编号的（首选）版本，以及一个从源代码仓库自动检出的版本，该版本一般都是被认为更“先进”的版本，但是它只能被显式的选择。
+
+\medskip
+For example, in the OpenEmbedded codebase, there is a standard, versioned recipe file for BusyBox, \code{busybox_1.22.1.bb}, but there is also a Git-based version, \code{busybox_git.bb}, which explicitly contains the line
+
+\medskip
+例如，在 OpenEmbedded 代码仓库中，有一个用于 BusyBox 的标准的，版本化的配方文件 ，\code{busybox_1.22.1.bb}；但是同时也有一个基于 Git 的版本 ，\code{busybox_git.bb}. 它明确包含了以下行：
+
+\medskip
+\begin{pyglist}
+DEFAULT_PREFERENCE = "-1"
+\end{pyglist}
+
+\medskip
+to ensure that the numbered, stable version is always preferred unless the developer selects otherwise.
+
+\medskip
+除非开发人员另有明确的其他的显式选择，上面的那行代码会确保有明确版本编号，稳定的那一个版本始终是 BitBake 的首选。
+\end{noteblock}
+
+
+\newsection{Dependencies}{依赖关系}
+Each target BitBake builds consists of multiple tasks such as \code{fetch}, \code{unpack}, \code{patch}, \code{configure}, and \code{compile}. For best performance on multi-core systems, BitBake considers each task as an independent entity with its own set of dependencies.
+
+每个 BitBake 的构建目标都包含多个任务，例如 \code{fetch}、 \code{unpack}、\code{patch}、\code{configure} 和 \code{compile}。为了在多核系统上获得最佳性能，BitBake 将每个任务都视为具有自己的依赖项集的独立实体。
+
+Dependencies are defined through several variables. You can find information about variables BitBake uses in the \bbsection{Variables Glossary} near the end of this manual. At a basic level, it is sufficient to know that BitBake uses the \bbgls{DEPENDS} and \bbgls{RDEPENDS} variables when calculating dependencies.
+
+依赖关系是通过几个变量来进行定义的。你可以在本手册末尾附近的 \bbsections{Variables Glossary}{变量术语表} 中找到有关 BitBake 所使用的变量的相关信息。在基础知识层面上，只需要知道 BitBake 在计算依赖关系时是使用 \bbgls{DEPENDS} 和 \bbgls{RDEPENDS} 变量就足够了。
+
+For more information on how BitBake handles dependencies, see the \bbsection{Dependencies} section.
+
+有关 BitBake 如何处理依赖关系的更多信息，请参阅\bbsections{Dependencies}{依赖关系}部分。
+
+\newsection{The Task List}{任务列表}
+
+Based on the generated list of providers and the dependency information, BitBake can now calculate exactly what tasks it needs to run and in what order it needs to run them. The \bbsection{Executing Tasks} section has more information on how BitBake chooses which task to execute next.
+
+根据生成的提供者列表和依赖项信息，BitBake 现在可以准确计算出哪些任务需要运行以及运行这些任务的顺序。\bbsections{Executing Tasks}{执行任务} 部分提供了有关 BitBake 如何选择下一步执行哪个任务的更多信息。
+
+The build now starts with BitBake forking off threads up to the limit set in the \bbgls{BB_NUMBER_THREADS} variable. BitBake continues to fork threads as long as there are tasks ready to run, those tasks have all their dependencies met, and the thread threshold has not been exceeded.
+
+现在，构建过程从 BitBake 复制相关线程开始，直至达到 \bbgls{BB_NUMBER_THREADS} 变量中所设置的限制 。只要还有任务已经准备好开始运行，而且这些任务的所有依赖关系已经满足要求，并且总的线程数尚未超过系统所支持的最多线程数，BitBake 就会继续复制线程的工作。
+
+It is worth noting that you can greatly speed up the build time by properly setting the \bbgls{BB_NUMBER_THREADS} variable.
+
+值得注意的是，通过正确设置 \bbgls{BB_NUMBER_THREADS} 变量可以大大加快构建时间。
+
+As each task completes, a timestamp is written to the directory specified by the \bbgls{STAMP} variable. On subsequent runs, BitBake looks in the build directory within \code{tmp/stamps} and does not rerun tasks that are already completed unless a timestamp is found to be invalid. Currently, invalid timestamps are only considered on a per recipe file basis. So, for example, if the configure stamp has a timestamp greater than the compile timestamp for a given target, then the compile task would rerun. Running the compile task again, however, has no effect on other providers that depend on that target.
+
+每个任务完成时，当时的时间戳都会写入 \bbgls{STAMP} 变量指定的目录中。在后续运行中，BitBake 会查找内部的构建目录 \code{tmp/stamps}，除非发现时间戳是无效的，否则 BitBake 是不会重新运行已经完成的任务。目前，BitBake 仅在每个配方文件的基础上考虑无效时间戳。举例来说，如果当前配置任务所标记的时间戳要晚于给定目标的编译任务的时间戳，BitBake将重新运行编译任务。但是，再次运行编译任务不会对依赖于该目标的其他程序提供者产生任何影响。
+
+The exact format of the stamps is partly configurable. In modern versions of BitBake, a hash is appended to the stamp so that if the configuration changes, the stamp becomes invalid and the task is automatically rerun. This hash, or signature used, is governed by the signature policy that is configured (see the \bbsection{Checksums (Signatures)} section for information). It is also possible to append extra metadata to the stamp using the \code{[stamp-extra-info]} task flag. For example, OpenEmbedded uses this flag to make some tasks machine-specific.
+
+时间戳的确切格式是部分可配置的。在 BitBake 的新版本中，哈希值会附加到时间戳的标记中，这样的话，如果构建配置发生更改，时间戳标记就会失效，并且相应的任务会自动重新运行。此哈希值或使用的签名由构建配置的签名策略控制（有关信息请参阅 \bbsections{Checksums (Signatures)}{校验和（签名）} 部分）。还可以使用 \code{[stamp-extra-info]} 任务标志将额外的元数据附加到时间戳标记里去。例如，OpenEmbedded 使用此标志来使某些任务只能运行于某些特定的目标机器。
+
+\begin{noteblock}{Note}%
+
+Some tasks are marked as ``nostamp'' tasks. No timestamp file is created when these tasks are run. Consequently, ``nostamp'' tasks are always rerun.
+
+\medskip
+有些任务可以被标记为``无时间戳（nostamp）'' 的任务。运行这些任务时，BitBake不会创建时间戳文件。因此，这些``无时间戳（nostamp）'' 任务在任何情况下都是被重新运行的。
+\end{noteblock}
+
+For more information on tasks, see the \bbsection{Tasks} section.
+
+有关任务的更多信息，请参阅\bbsections{Tasks}{任务}部分。
+
+\newsection{Executing Tasks}{执行任务}
+\label{section:Executing Tasks}
+
+Tasks can be either a shell task or a Python task. For shell tasks, BitBake writes a shell script to \code{${T}/run.do_taskname.pid}\footnotemark[1] and then executes the script. The generated shell script contains all the exported variables, and the shell functions with all variables expanded. Output from the shell script goes to the file \code{${T}/log.do_taskname.pid}\footnotemark[1]. Looking at the expanded shell functions in the run file and the output in the log files is a useful debugging technique.
+
+BitBake 的任务可以是 shell 任务，也可以是 Python 任务。对于 shell 任务来讲，BitBake 将 shell 脚本写入 \code{${T}/run.do_taskname.pid}\footnotemark[1]，然后再执行该脚本。生成的 shell 脚本包含了所有导出的变量，以及展开所有变量所需的 shell 函数。shell 脚本的输出会保存到文件 \code{${T}/log.do_taskname.pid}\footnotemark[1]。学会如何查看运行文件中扩展的 shell 函数和日志文件中的输出是一种非常有用的调试技术。
+
+\footnotetext[1]{\code{T} 是指 \bbgls{T} 变量}
+
+For Python tasks, BitBake executes the task internally and logs information to the controlling terminal. Future versions of BitBake will write the functions to files similar to the way shell tasks are handled. Logging will be handled in a way similar to shell tasks as well.
+
+对于Python任务，BitBake 在其自身内部来执行这些任务并将信息输出记录到控制终端。 BitBake 的未来版本也会以类似于处理 shell 任务的方式将函数写入文件。运行 Python 任务的日志记录的处理方式也会与 shell 任务类似。
+
+The order in which BitBake runs the tasks is controlled by its task scheduler. It is possible to configure the scheduler and define custom implementations for specific use cases. For more information, see these variables that control the behavior:
+
+BitBake 运行任务的顺序由其任务调度程序来控制。在特殊情况下，用户可以配置调度程序并自定义其实现方法。有关更多信息，请参阅控制这些行为的变量：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \bbgls{BB_SCHEDULER}
+\item \bbgls{BB_SCHEDULERS}
+\end{itemize}
+
+It is possible to have functions run before and after a task's main function. This is done using the \code{[prefuncs]} and \code{[postfuncs]} flags of the task that lists the functions to run.
+
+BitBake 允许用户来定义在任务的主函数之前和之后运行的自主函数。这个目标可以通过列出要运行这些函数的任务的 \code{[prefuncs]} 和 \code{[postfuncs]} 任务标志来完成。
+
+\newsection{Checksums (Signatures)}{校验和（签名）}
+\label{section:Checksums (Signatures)}
+
+A checksum is a unique signature of a task's inputs. The signature of a task can be used to determine if a task needs to be run. Because it is a change in a task's inputs that triggers running the task, BitBake needs to detect all the inputs to a given task. For shell tasks, this turns out to be fairly easy because BitBake generates a ``run'' shell script for each task and it is possible to create a checksum that gives you a good idea of when the task's data changes.
+
+校验和是任务输入参数的唯一签名。任务的签名可用于确定是否需要 BitBake 来运行任务。由于任务输入参数的更改会触发任务的运行，因此 BitBake 需要检测给定任务的所有输入参数。对于 shell 任务来讲，这是相当容易的事情，因为 BitBake 会为每个任务生成一个``可运行''的 shell 脚本，并且可以创建一个校验和，这个校验和会让你很好地了解任务数据何时发生了变化。
+
+To complicate the problem, some things should not be included in the checksum. First, there is the actual specific build path of a given task - the working directory. It does not matter if the working directory changes because it should not affect the output for target packages. The simplistic approach for excluding the working directory is to set it to some fixed value and create the checksum for the ``run'' script. BitBake goes one step better and uses the \bbgls{BB_BASEHASH_IGNORE_VARS} variable to define a list of variables that should never be included when generating the signatures.
+
+为了(不)使问题复杂化，有些东西不应该包含在校验和中。首先，对于给定的的任务，实际上它都有实际的特定的构建路径，这个路径就是工作目录。工作目录的名称是否进行了更改并不重要，因为它不应该影响构建目标的软件包的输出。将工作目录排除在校验和的计算之外的最简单方法是将其设置为某个固定值并使用此值为``可运行''的脚本创建校验和。 BitBake 则采取了更好一点的方法：使用 \bbgls{BB_BASEHASH_IGNORE_VARS} 变量来定义生成签名时永远不应包含的变量列表。
+
+Another problem results from the ``run'' scripts containing functions that might or might not get called. The incremental build solution contains code that figures out dependencies between shell functions. This code is used to prune the ``run'' scripts down to the minimum set, thereby alleviating this problem and making the ``run'' scripts much more readable as a bonus.
+
+另一个问题是由所包含的一些可能会或可能不会被调用的函数的``可运行''脚本引起来的。增量构建的解决方案是包含一些用来找出这些 shell 函数之间依赖关系的代码。这些代码可以将``可运行''脚本修剪到最小代码集，从而能够缓解此问题并使这些``可运行''脚本更具有可读性。
+
+So far we have solutions for shell scripts. What about Python tasks? The same approach applies even though these tasks are more difficult. The process needs to figure out what variables a Python function accesses and what functions it calls. Again, the incremental build solution contains code that first figures out the variable and function dependencies, and then creates a checksum for the data used as the input to the task.
+
+到目前为止，我们已经有了针对 shell 脚本的解决方案。 哪 Python 任务怎么办呢？即使这些任务更加困难，我们也可以采用相同的方法来处理。该过程需要弄清楚 Python 函数可以访问哪些变量以及调用哪些函数。同样，增量构建的解决方案所包含的那些代码首先找出变量和函数依赖关系，然后再为用作任务输入的数据创建校验和。
+
+Like the working directory case, situations exist where dependencies should be ignored. For these cases, you can instruct the build process to ignore a dependency by using a line like the following:
+
+与工作目录的情况一样，在计算校验和的时间，还存在一些依赖关系也应该被忽略的情况。对于这些情况，你可以使用如下所示的一行代码来指示构建过程去忽略依赖项：
+
+\begin{pyglist}
+PACKAGE_ARCHS[vardepsexclude] = "MACHINE"
+\end{pyglist}
+
+This example ensures that the \code{PACKAGE_ARCHS} variable does not depend on the value of \code{MACHINE}, even if it does reference it.
+
+此代码示例可以确保 \code{PACKAGE_ARCHS} 变量不依赖于 \code{MACHINE} 变量的值，即使 \code{PACKAGE_ARCHS} 也确实引用了 \code{MACHINE} 的值。
+
+Equally, there are cases where we need to add dependencies BitBake is not able to find. You can accomplish this by using a line like the following:
+
+同样，在某些情况下我们需要添加 BitBake 无法找到的依赖项。你可以使用如下所示的一行代码来完成此操作：
+
+\begin{pyglist}
+PACKAGE_ARCHS[vardeps] = "MACHINE"
+\end{pyglist}
+
+This example explicitly adds the MACHINE variable as a dependency for \code{PACKAGE_ARCHS}.
+
+此示例显式地添加 \code{MACHINE} 变量作为 \code{PACKAGE_ARCHS} 变量的依赖项。
+
+Consider a case with in-line Python, for example, where BitBake is not able to figure out dependencies. When running in debug mode (i.e. using \code{-DDD}), BitBake produces output when it discovers something for which it cannot figure out dependencies.
+
+例如，考虑在使用内置 Python 代码的情况下，BitBake 无法找出依赖关系。当在调试模式下运行时（即使用 \code{-DDD} 选项），BitBake 在发现它无法给一些东西找出依赖关系时，它也会生成一些输出。
+
+Thus far, this section has limited discussion to the direct inputs into a task. Information based on direct inputs is referred to as the ``basehash'' in the code. However, there is still the question of a task's indirect inputs —{}- the things that were already built and present in the build directory. The checksum (or signature) for a particular task needs to add the hashes of all the tasks on which the particular task depends. Choosing which dependencies to add is a policy decision. However, the effect is to generate a master checksum that combines the basehash and the hashes of the task's dependencies.
+
+到目前为止，本节的讨论仅限于任务的直接输入。基于直接输入的信息所生成的校验和在代码中称为``基本哈希值（basehash）''。然而，仍然存在由任务的间接输入 -{}- 那些已经被构建并存在于构建目录中的东西 -{}- 所引起来的问题。特定任务的校验和（或签名）需要添加该特定任务所依赖的所有任务的哈希值。选择添加哪些依赖项是一个策略决定。然而，我们想要的最终效果就是生成一个主校验和，该主校验和将基本哈希值和所有任务依赖项的哈希值结合在了一起。
+
+At the code level, there are a variety of ways both the basehash and the dependent task hashes can be influenced. Within the BitBake configuration file, we can give BitBake some extra information to help it construct the basehash. The following statement effectively results in a list of global variable dependency excludes -{}— variables never included in any checksum. This example uses variables from OpenEmbedded to help illustrate the concept:
+
+在代码层级别，有多种方式可以影响基本哈希值和相关依赖任务的哈希值。在 BitBake 配置文件中，我们可以为 BitBake 提供一些额外的信息来帮助它构建基本哈希值。以下语句可以用来有效地生成一个需要从依赖性中排除的全局变量的列表 -{}- 一些从不需要包含在任何校验和中的变量。此示例使用了 OpenEmbedded 中的变量来帮助说明该概念是如何工作的：
+
+\begin{pyglist}
+BB_BASEHASH_IGNORE_VARS ?= "TMPDIR FILE PATH PWD BB_TASKHASH BBPATH DL_DIR \
+    SSTATE_DIR THISDIR FILESEXTRAPATHS FILE_DIRNAME HOME LOGNAME SHELL \
+    USER FILESPATH STAGING_DIR_HOST STAGING_DIR_TARGET COREBASE PRSERV_HOST \
+    PRSERV_DUMPDIR PRSERV_DUMPFILE PRSERV_LOCKDOWN PARALLEL_MAKE \
+    CCACHE_DIR EXTERNAL_TOOLCHAIN CCACHE CCACHE_DISABLE LICENSE_PATH SDKPKGSUFFIX"
+\end{pyglist}
+
+The previous example excludes the work directory, which is part of \code{TMPDIR}.
+
+前面的示例排除了工作目录，因为它是 \code{TMPDIR} 目录的一部分。
+
+The rules for deciding which hashes of dependent tasks to include through dependency chains are more complex and are generally accomplished with a Python function. The code in \href{https://git.yoctoproject.org/poky/tree/meta/lib/oe/sstatesig.py}{meta/lib/oe/sstatesig.py} shows two examples of this and also illustrates how you can insert your own policy into the system if so desired. This file defines the basic signature generator OpenEmbedded-Core uses: ``OEBasicHash''. By default, there is a dummy ``noop'' signature handler enabled in BitBake. This means that behavior is unchanged from previous versions. \code{OE-Core} uses the ``OEBasicHash'' signature handler by default through this setting in the \code{bitbake.conf} file:
+
+那些通过依赖关系链来决定哪些依赖任务的哈希值应该被包括的规则会变得更加复杂，并且这些规则通常是使用 Python 函数来完成的。\href{https://git.yoctoproject.org/poky/tree/meta/lib/oe/sstatesig.py}{meta/lib/oe/sstatesig.py} 中的代码展示了这方面的两个示例，并且还说明了如何在需要时将自己的策略插入到构建系统中去。该文件定义了 OpenEmbedded-Core 使用的基本签名生成器：``OEBasicHash''。默认情况下，BitBake 中启用了一个虚拟的``noop''签名处理程序。这与以前的版本相比没有变化。\code{OE-Core} 通过 \code{bitbake.conf} 文件中的此设置默认使用 ``OEBasicHash'' 作为签名处理程序：
+
+\begin{pyglist}
+BB_SIGNATURE_HANDLER ?= "OEBasicHash"
+\end{pyglist}
+
+The main feature of the ``OEBasicHash'' \code{BB_SIGNATURE_HANDLER} is that it adds the task hash to the stamp files. Thanks to this, any metadata change will change the task hash, automatically causing the task to be run again. This removes the need to bump \bbgls{PR} values, and changes to metadata automatically ripple across the build.
+
+``OEBasicHash'' (参见 \bbgls{BB_SIGNATURE_HANDLER}) 的主要功能是将任务哈希值添加到相应的标记文件中。因此，任何元数据的更改都会更改相关任务的哈希值，从而会自动导致任务再次被运行。这种方式消除了通过提高 \bbgls{PR} 值来反映元数据被更改了的需要，并且元数据的更改会自动地影响整个构建过程的每一个环节。
+
+It is also worth noting that the end result of signature generators is to make some dependency and hash information available to the build. This information includes:
+
+还值得注意的是，签名生成器的最终结果是为构建提供一些依赖项和哈希值的信息。这些信息包括：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \texttt{BB\_BASEHASH\_task}\textbf{-taskname:} The base hashes for each task in the recipe.\par
+配方中每个任务的基本哈希值。
+
+\item \texttt{BB\_BASEHASH\_}\textbf{filename:taskname:} The base hashes for each dependent task.\par
+每个相关任务的基本哈希值。
+
+\item \bbgls{BB_TASKHASH}: The hash of the currently running task.\par
+当前正在运行的任务的哈希值。
+\end{itemize}
+
+It is worth noting that BitBake's ``-S" option lets you debug BitBake's processing of signatures. The options passed to -S allow different debugging modes to be used, either using BitBake's own debug functions or possibly those defined in the metadata/signature handler itself. The simplest parameter to pass is ``none'', which causes a set of signature information to be written out into \code{STAMPS_DIR} corresponding to the targets specified. The other currently available parameter is ``printdiff'', which causes BitBake to try to establish the closest signature match it can (e.g. in the sstate cache) and then run \code{bitbake-diffsigs} over the matches to determine the stamps and delta where these two stamp trees diverge.
+
+值得注意的是，BitBake 的 ``-S'' 选项允许你对 BitBake 的签名处理过程进行调试。传递给 ``-S'' 选项的不同参数允许用户使用不同的调试模式：既可以使用 BitBake 自己的调试函数，也可以使用元数据/签名处理程序本身所定义的调试函数。最简单的参数是 ``none''，它会把一组签名信息输出到相应任务所指定的 \code{STAMPS_DIR} 目录中。另一个可用的参数是 ``printdiff''，它使 BitBake 尝试去建立最接近的签名匹配（例如在状态缓存中），然后再对这些所建立的匹配来运行 \code{bitbake-diffsigs} 以确定这些标记树在分叉时的标记和变化部分。
+
+
+
+\begin{noteblock}{Note}%
+It is likely that future versions of BitBake will provide other signature handlers triggered through additional ``-S" parameters.
+
+\medskip
+BitBake 的未来版本可能会提供通过传递给 ``-S'' 选项的额外参数来触发的其他签名处理程序。
+\end{noteblock}
+
+
+You can find more information on checksum metadata in the \bbsection{Task Checksums and Setscene} section.
+
+你可以在 \bbsections{Task Checksums and Setscene}{任务校验和和场景设置} 部分找到有关校验和和元数据的更多信息。
+
+
+\newsection{Setscene}{场景设置}
+\label{section:Setscene}
+
+The setscene process enables BitBake to handle ``pre-built" artifacts\footnotemark[1]. The ability to handle and reuse these artifacts allows BitBake the luxury of not having to build something from scratch every time. Instead, BitBake can use, when possible, existing build artifacts.
+
+场景设置（setscene）流程可以使 BitBake 能够处理一些``预构建''的构建生成物\footnotemark[1]。处理和重新使用这些构建生成物的能力使得 BitBake 不必每次都从头开始构建某些东西。相反，BitBake 如果可能的话，可以重复使用现有的已经完成的构建生成物。
+
+\footnotetext[1]{这里所说的 ``构建生成物（artifacts）'' 是一个指代范围很广的东西，可以指在构建过程中所生成的任何东西，包括各种文件，包括源代码，目标文件，各种自动生成的脚本等等，并不是单纯指构建目标的最终生成文件，如软件包或者是二进制文件。}
+
+BitBake needs to have reliable data indicating whether or not an artifact is compatible. Signatures, described in the previous section, provide an ideal way of representing whether an artifact is compatible. If a signature is the same, an object can be reused.
+
+BitBake 需要有可靠的数据来表明一个构建生成物是否兼容。在上一章节中描述的签名提供了一种表示构建生成物是否兼容的理想方式。如果构建生成物的签名相同，则意味着 BitBake 可以重复使用此构建生成物。
+
+If an object can be reused, the problem then becomes how to replace a given task or set of tasks with the pre-built artifact. BitBake solves the problem with the ``setscene'' process.
+
+如果一个构建生成物可以重用，那么问题就变成了如何用预构建生成物来替换给定的一个任务或一组任务。 BitBake 通过 ``场景设置'' 流程解决了这个问题。
+
+When BitBake is asked to build a given target, before building anything, it first asks whether cached information is available for any of the targets it's building, or any of the intermediate targets. If cached information is available, BitBake uses this information instead of running the main tasks.
+
+当 BitBake 被要求构建给定目标时，它在构建任何内容之前，都会首先对缓存的信息进行查询，来查看缓存中是否有可用于它正在构建的任何目标或任何中间目标的信息。如果缓存信息可用，BitBake 将直接使用此信息而不是运行主任务。
+
+BitBake first calls the function defined by the \bbgls{BB_HASHCHECK_FUNCTION} variable with a list of tasks and corresponding hashes it wants to build. This function is designed to be fast and returns a list of the tasks for which it believes in can obtain artifacts.
+
+BitBake 首先对要构建的任务列表和相应的哈希值来调用 \bbgls{BB_HASHCHECK_FUNCTION} 变量所定义的函数。该函数被设计地可以快速地运行并返回一个它认为可以获得所需要的构建生成物的任务的列表。
+
+Next, for each of the tasks that were returned as possibilities, BitBake executes a setscene version of the task that the possible artifact covers. Setscene versions of a task have the string ``\_setscene'' appended to the task name. So, for example, the task with the name \code{xxx} has a setscene task named \code{xxx_setscene}. The setscene version of the task executes and provides the necessary artifacts returning either success or failure.
+
+接下来，Bitbake 会对返回来的每个任务执行那个可能的构建生成物所涵盖的任务的``场景设置''版本。任务的``场景设置''版本是在任务名称后附加字符串``\_setscene''。例如，名为 \code{xxx} 的任务的``场景设置''版本的任务名就是 \code{xxx_setscene}。在任务的 ``场景设置'' 版本执行时，它所提供的构建生成物会返回成功或失败的信息。
+
+As previously mentioned, an artifact can cover more than one task. For example, it is pointless to obtain a compiler if you already have the compiled binary. To handle this, BitBake calls the \bbgls{BB_SETSCENE_DEPVALID} function for each successful setscene task to know whether or not it needs to obtain the dependencies of that task.
+
+如前所述，一个构建生成物可以涵盖多个任务。例如，如果你已经拥有了已编译好的二进制文件，那么再去获取一个编译器程序是没有意义的。为了处理这个问题，BitBake 为每个成功的``场景设置''任务来调用\linebreak \bbgls{BB_SETSCENE_DEPVALID} 变量所定义的函数从而知道它是否还需要获取该任务的依赖项。
+
+You can find more information on setscene metadata in the \bbsection{Task Checksums and Setscene} section.
+
+你可以在 \bbsections{Task Checksums and Setscene}{任务的校验和和场景设置} 部分找到有关 setscene 元数据的更多信息。
+
+\newsection{Logging}{日志记录}
+\label{section:Logging}
+
+In addition to the standard command line option to control how verbose builds are when execute, bitbake also supports user defined configuration of the \href{https://docs.python.org/3/library/logging.html}{Python logging} facilities through the \bbgls{BB_LOGCONFIG} variable. This variable defines a JSON or YAML \href{https://docs.python.org/3/library/logging.config.html}{logging configuration} that will be intelligently merged into the default configuration. The logging configuration is merged using the following rules:
+
+除了用标准命令行选项来控制构建执行中的日志文件的详细程度之外，bitbake 还支持通过 \bbgls{BB_LOGCONFIG} 变量对 \href{https://docs.python.org/3/library/logging.html}{Python logging} 日志记录工具进行用户自定义的配置。此变量定义了一个 JSON 或 YAML 格式的 \href{https://docs.python.org/3/library/logging.config.html}{logging configuration}，该配置将被智能地合并到默认的构建配置中。日志记录配置使用以下规则来进行合并：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item The user defined configuration will completely replace the default configuration if top level key \code{bitbake_merge} is set to the value \code{False}. In this case, all other rules are ignored.\par
+
+\medskip
+如果顶层的 \code{bitbake_merge} 属性的值被设置为 \code{False} ，则默认配置会被用户的自定义配置完全替换掉。在这种情况下，所有其他规则都将被忽略。
+
+\item The user configuration must have a top level \code{version} which must match the value of the default configuration.
+
+\medskip
+用户的自定义配置必须具有一个顶层的名为 \code{version} 的属性， 其值必须与默认配置的相应赋值相匹配。
+
+\item Any keys defined in the \code{handlers}, \code{formatters}, or \code{filters}, will be merged into the same section in the default configuration, with the user specified keys taking replacing a default one if there is a conflict. In practice, this means that if both the default configuration and user configuration specify a handler named myhandler, the user defined one will replace the default. To prevent the user from inadvertently replacing a default handler, formatter, or filter, all of the default ones are named with a prefix of ``\code{BitBake.}''.
+
+\medskip
+任何定义在\code{handlers}、\code{formatters}、 或者 \code{filters} 属性对象中的值都将被合并到默认配置中的同一对象中去，如果这些键值存在冲突，则用户指定的键值将替换默认的键值。实际上，这意味着如果默认配置和用户配置都指定了名为 \code{myhandler} 的处理程序，则用户所定义的处理程序将替换默认的处理程序。为了防止用户无意中替换默认处理程序、格式化程序或过滤器，所有默认处理程序、格式化程序或过滤器的名字都会加上前缀 \code{BitBake} 来表示。
+
+\item If a logger is defined by the user with the key \code{bitbake_merge} set to \code{False}, that logger will be completely replaced by user configuration. In this case, no other rules will apply to that logger.
+
+\medskip
+如果用户定义了自己的日志记录工具（logger），并将其键 \code{bitbake_merge} 设置为 \code{False}，则该日志记录工具将完全被用户自定义的配置所替换。在这种情况下，该日志记录工具将忽略所有其他的规则。
+
+\item All user defined \code{filter} and \code{handlers} properties for a given logger will be merged with corresponding properties from the default logger. For example, if the user configuration adds a filter called \code{myFilter} to the \code{BitBake.SigGen}, and the default configuration adds a filter called \code{BitBake.defaultFilter}, both filters will be applied to the logger.
+
+\medskip
+所有用户给特定的日志记录工具所定义的 \code{filter} 和 \code{handlers} 属性都将与默认的日志记录工具的相应属性合并。例如，如果用户配置中给\code{BitBake.SigGen} 对象添加了一个值为 \code{myFilter} 的 filter 属性，而默认配置中则添加了一个值为 \code{BitBake.defaultFilter} 的 filter 属性 ， 则这两个 filter 的值会被合并在一起供日志记录工具使用。
+\end{itemize}
+
+
+As a first example, you can create a \code{hashequiv.json} user logging configuration file to log all Hash Equivalence\footnotemark[1] related messages of VERBOSE or higher priority to a file called \code{hashequiv.log}:
+
+
+作为第一个示例，你可以创建一个名为 \code{hashequiv.json} 的用户日志记录配置文件，以将所有与哈希等价\footnotemark[1]相关的消息以 VERBOSE 或更高优先级的方式记录到名为 \code{hashequiv.log} 的文件中：
+
+\footnotetext[1]{参见\url{https://docs.yoctoproject.org/dev/overview-manual/concepts.html\#hash-equivalence}}
+
+
+\begin{pyglist}
+{
+    "version": 1,
+    "handlers": {
+        "autobuilderlog": {
+            "class": "logging.FileHandler",
+            "formatter": "logfileFormatter",
+            "level": "DEBUG",
+            "filename": "hashequiv.log",
+            "mode": "w"
+        }
+    },
+    "formatters": {
+            "logfileFormatter": {
+                "format": "%(name)s: %(levelname)s: %(message)s"
+            }
+    },
+    "loggers": {
+        "BitBake.SigGen.HashEquiv": {
+            "level": "VERBOSE",
+            "handlers": ["autobuilderlog"]
+        },
+        "BitBake.RunQueue.HashEquiv": {
+            "level": "VERBOSE",
+            "handlers": ["autobuilderlog"]
+        }
+    }
+}
+\end{pyglist}
+
+Then set the \bbgls{BB_LOGCONFIG} variable in \code{conf/local.conf}:
+
+然后在 \code{conf/local.conf} 中设置 \bbgls{BB_LOGCONFIG} ：
+
+\begin{pyglist}
+BB_LOGCONFIG = "hashequiv.json"
+\end{pyglist}
+
+Another example is this \code{warn.json} file to log all \code{WARNING} and higher priority messages to a \code{warn.log} file:
+
+另一个示例是此 \code{warn.json} 文件，它将所有 \code{WARNING} 和更高优先级的消息记录到文件 \code{warn.log} 中去。
+
+\begin{pyglist}
+{
+    "version": 1,
+    "formatters": {
+        "warnlogFormatter": {
+            "()": "bb.msg.BBLogFormatter",
+            "format": "%(levelname)s: %(message)s"
+        }
+    },
+
+    "handlers": {
+        "warnlog": {
+            "class": "logging.FileHandler",
+            "formatter": "warnlogFormatter",
+            "level": "WARNING",
+            "filename": "warn.log"
+        }
+    },
+
+    "loggers": {
+        "BitBake": {
+            "handlers": ["warnlog"]
+        }
+    },
+
+    "@disable_existing_loggers": false
+}
+\end{pyglist}
+
+Note that BitBake's helper classes for structured logging are implemented in \code{lib/bb/msg.py}.
+
+请注意，BitBake 用于结构化日志记录的帮助程序类是在定义在 \code{lib/bb/msg.py} 文件中.
+

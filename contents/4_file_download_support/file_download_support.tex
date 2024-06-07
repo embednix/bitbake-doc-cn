@@ -1,0 +1,1024 @@
+\newchapter{File Download Support}{文件下载支持}
+
+BitBake's fetch module is a standalone piece of library code that deals with the intricacies of downloading source code and files from remote systems. Fetching source code is one of the cornerstones of building software. As such, this module forms an important part of BitBake.
+
+BitBake 的获取模块是一个独立的库代码，用于处理从远程系统下载源代码和文件的复杂问题。获取源代码是构建软件的基石之一。因此该模块是 BitBake 的重要组成部分。
+
+The current fetch module is called ``fetch2'' and refers to the fact that it is the second major version of the API. The original version is obsolete and has been removed from the codebase. Thus, in all cases, ``fetch'' refers to ``fetch2'' in this manual.
+
+当前的 fetch 模块名为 ``fetch2''，表示它是该 API 的第二个主要版本。原始版本已经过时了并且已从代码仓库中删除掉了。因此在所有情况下，本手册中的 ``fetch'' 均指``fetch2''。
+
+\newsection{The Download (Fetch)}{下载（Fetch）}
+
+BitBake takes several steps when fetching source code or files. The fetcher codebase deals with two distinct processes in order: obtaining the files from somewhere (cached or otherwise) and then unpacking those files into a specific location and perhaps in a specific way. Getting and unpacking the files is often optionally followed by patching. Patching, however, is not covered by this module.
+
+BitBake 在获取源代码或文件时需要几个步骤。Fetcher 代码仓库按照顺序处理两个不同的过程：从某个地方（缓存或其他方式）获取文件，然后将这些文件解压（可能以特定方式解压）到特定位置。获取和解压文件后通常可以选择进行修补。但是本章节不涵盖修补方面的话题。
+
+The code to execute the first part of this process, a fetch, looks something like the following:
+
+执行该过程第一部分（fetch）的代码如下所示：
+
+\begin{pyglist}
+src_uri = (d.getVar('SRC_URI') or "").split()
+fetcher = bb.fetch2.Fetch(src_uri, d)
+fetcher.download()
+\end{pyglist}
+
+This code sets up an instance of the fetch class. The instance uses a space-separated list of URLs from the \bbgls{SRC_URI} variable and then calls the \code{download} method to download the files.
+
+这段代码对 fetch 类的一个实例进行了设置。该实例使用了来自 \bbgls{SRC_URI} 变量所定义的由空格来分隔的 URL 列表 ，然后调用 \code{download} 方法来下载文件。
+
+The instantiation of the fetch class is usually followed by:
+
+fetch 类的实例通常会接着实现如下步骤：
+
+\begin{pyglist}
+rootdir = l.getVar('WORKDIR')
+fetcher.unpack(rootdir)
+\end{pyglist}
+
+This code unpacks the downloaded files to the specified by \code{WORKDIR}.
+
+此代码将下载的文件解压到由 \code{WORKDIR} 变量所指定的位置。
+
+\medskip
+\begin{noteblock}{Note}%
+For convenience, the naming in these examples matches the variables used by OpenEmbedded. If you want to see the above code in action, examine the OpenEmbedded class file \code{base.bbclass}.
+
+\medskip
+为方便起见，这些示例中的命名与 OpenEmbedded 使用的变量命名是相一致的。如果你想查看上述代码的实际效果，请查看 OpenEmbedded 的 \code{base.bbclass} 类文件。
+\end{noteblock}
+
+The \bbgls{SRC_URI} and \code{WORKDIR} variables are not hardcoded into the fetcher, since those fetcher methods can be (and are) called with different variable names. In OpenEmbedded for example, the shared state (sstate) code uses the fetch module to fetch the sstate files.
+
+\bbgls{SRC_URI} 变量和 \code{WORKDIR} 变量都没有在 fetcher 中被设为一个固定值，因为这些 fether 类的成员函数可以（并且确实）使用不同的变量名调用。例如，在 OpenEmbedded 中，共享状态 (sstate) 代码使用提取模块来提取 sstate 文件。
+
+When the \code{download()} method is called, BitBake tries to resolve the URLs by looking for source files in a specific search order:
+
+当 \code{download()} 成员函数被调用后，BitBake 会尝试按照特定的搜索顺序对源文件进行查找以解析这些 URL：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{Pre-mirror Sites:} BitBake first uses pre-mirrors to try and find source files. These locations are defined using the \bbgls{PREMIRRORS} variable.
+\item \textbf{预镜像站点:} BitBake 首先使用预镜像站点来尝试查找源文件。这些站点位置是使用 \bbgls{PREMIRRORS} 变量来定义的。
+
+\item \textbf{Source URI:} If pre-mirrors fail, BitBake uses the original URL (e.g from \bbgls{SRC_URI}).
+\item \textbf{源代码 URI:} 如果预镜像失败，BitBake 将使用原始 URL（例如来自 \bbgls{SRC_URI}）。
+
+\item \textbf{Mirror Sites:} If fetch failures occur, BitBake next uses mirror locations as defined by the MIRRORS variable.
+\item \textbf{镜像站点:} 如果发生获取失败的情况，BitBake 接下来将使用 \bbgls{MIRRORS} 变量所定义的镜像位置。
+\end{itemize}
+
+For each URL passed to the fetcher, the fetcher calls the submodule that handles that particular URL type. This behavior can be the source of some confusion when you are providing URLs for the \bbgls{SRC_URI} variable. Consider the following two URLs:
+
+对于传递给 fetcher 的每个 URL，fetcher 都会调用处理该特定 URL 类型的子模块来对此 URL 进行处理。当你为 \bbgls{SRC_URI} 变量提供 URL 时，此行为可能会造成一些混淆。请考虑以下两个 URL：
+
+\begin{pyglist}
+https://git.yoctoproject.org/git/poky;protocol=git
+git://git.yoctoproject.org/git/poky;protocol=http
+\end{pyglist}
+
+In the former case, the URL is passed to the \code{wget} fetcher, which does not understand ``git''. Therefore, the latter case is the correct form since the Git fetcher does know how to use HTTP as a transport.
+
+在前一种情况下，URL 被传递给无法理解 ``git'' 协议的 \code{wget} 抓取器。因此后一种情况是正确形式的 URL，因为 Git 抓取器知道如何使用 HTTP 作为传输方式。
+
+Here are some examples that show commonly used mirror definitions:
+
+以下是一些常用镜像定义的示例：
+
+\begin{pyglist}
+PREMIRRORS ?= "\
+   bzr://.*/.\*  http://somemirror.org/sources/ \
+   cvs://.*/.\*  http://somemirror.org/sources/ \
+   git://.*/.\*  http://somemirror.org/sources/ \
+   hg://.*/.\*   http://somemirror.org/sources/ \
+   osc://.*/.\*  http://somemirror.org/sources/ \
+   p4://.*/.\*   http://somemirror.org/sources/ \
+  svn://.*/.\*   http://somemirror.org/sources/"
+
+MIRRORS =+ "\
+   ftp://.*/.\*   http://somemirror.org/sources/ \
+   http://.*/.\*  http://somemirror.org/sources/ \
+   https://.*/.\* http://somemirror.org/sources/"
+\end{pyglist}
+
+It is useful to note that BitBake supports cross-URLs. It is possible to mirror a Git repository on an HTTP server as a tarball. This is what the \code{git://} mapping in the previous example does.
+
+值得注意的是，BitBake 支持跨 URL 操作。可以将 Git 代码仓库作为 tarball 的格式镜像到 HTTP 服务器上。这就是上例中的 \code{git://} 映射所做的。
+
+Since network accesses are slow, BitBake maintains a cache of files downloaded from the network. Any source files that are not local (i.e. downloaded from the Internet) are placed into the download directory, which is specified by the \bbgls{DL_DIR} variable.
+
+由于网络访问速度较慢，BitBake 会维护一个由从网络下载的文件所形成的缓存。任何非本地的源文件（即从互联网下载的）都会被放置在下载目录中，该目录由 \bbgls{DL_DIR} 变量来指定。
+
+File integrity is of key importance for reproducing builds. For non-local archive downloads, the fetcher code can verify SHA-256 and MD5 checksums to ensure the archives have been downloaded correctly. You can specify these checksums by using the \bbgls{SRC_URI} variable with the appropriate varflags as follows:
+
+文件完整性对于重现构建至关重要。对于非本地存档下载，fetcher 的代码可以验证文件的 SHA-256 和 MD5 校验和，以确保存档已正确下载。你可以使用 \bbgls{SRC_URI} 变量和合适的变量标志来指定这些校验和，如下所示：
+
+\begin{pyglist}
+SRC_URI[md5sum] = "value"
+SRC_URI[sha256sum] = "value"
+\end{pyglist}
+
+You can also specify the checksums as parameters on the \bbgls{SRC_URI} as shown below:
+
+你还可以将校验和指定为 \bbgls{SRC_URI} 变量上的参数，如下所示：
+
+\begin{pyglist}
+SRC_URI = "http://example.com/foobar.tar.bz2;md5sum=4a8e0f237e961fd7785d19d07fdb994d"
+\end{pyglist}
+
+If multiple URIs exist, you can specify the checksums either directly as in the previous example, or you can name the URLs. The following syntax shows how you name the URIs:
+
+如果存在多个 URI，你可以像上例一样直接指定校验和，也可以命名 URL。以下语法显示了如何命名 URI：
+
+\begin{pyglist}
+SRC_URI = "http://example.com/foobar.tar.bz2;name=foo"
+SRC_URI[foo.md5sum] = 4a8e0f237e961fd7785d19d07fdb994d
+\end{pyglist}
+
+
+After a file has been downloaded and has had its checksum checked, a ``.done'' stamp is placed in \bbgls{DL_DIR}. BitBake uses this stamp during subsequent builds to avoid downloading or comparing a checksum for the file again.
+
+在文件被下载下来并检查其校验和后，一个名为 ``.done'' 的文件标记将被放置在 \bbgls{DL_DIR} 变量所定义的目录中。BitBake 在后续构建期间将重复使用此标记，以避免再次重新下载或比较文件的校验和。
+
+\medskip
+\begin{noteblock}{Note}%
+It is assumed that local storage is safe from data corruption. If this were not the case, there would be bigger issues to worry about.
+
+\medskip
+人们通常认为本地存储不会发生数据损坏的情况。如果事实并非如此，那么就会有更大的问题需要担心。
+\end{noteblock}
+
+If \bbgls{BB_STRICT_CHECKSUM} is set, any download without a checksum triggers an error message. The \bbgls{BB_NO_NETWORK} variable can be used to make any attempted network access a fatal error, which is useful for checking that mirrors are complete as well as other things.
+
+如果设置了 \bbgls{BB_STRICT_CHECKSUM} 变量 ，则任何没有校验和的下载都会触发错误消息。\bbgls{BB_NO_NETWORK} 变量可用于使任何对网络访问的尝试都成为致命错误，这对于检查镜像是否完整以及其他事项很有用。
+
+If \bbgls{BB_CHECK_SSL_CERTS} is set to 0 then SSL certificate checking will be disabled. This variable defaults to \code{1} so SSL certificates are normally checked.
+
+如果 \bbgls{BB_CHECK_SSL_CERTS} 变量的设置为 ``0''，则对 SSL 证书的检查将被禁用。此变量默认为 ``1''，因此通常会对 SSL 证书进行检查。
+
+
+\newsection{The Unpack}{解包}
+
+The unpack process usually immediately follows the download. For all URLs except Git URLs, BitBake uses the common \code{unpack} method.
+
+解压过程通常在下载后立即进行。对于除 Git URL 之外的所有 URL，BitBake 都是使用通用的 \code{unpack} 方法。
+
+A number of parameters exist that you can specify within the URL to govern the behavior of the unpack stage:
+
+你可以在 URL 中指定许多参数来控制解包阶段的行为：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{unpack:} Controls whether the URL components are unpacked. If set to ``1'', which is the default, the components are unpacked. If set to ``0'', the unpack stage leaves the file alone. This parameter is useful when you want an archive to be copied in and not be unpacked.
+
+\medskip
+\textbf{unpack:} 控制是否解压 URL 组件。如果设置为 ``1''（默认值），则解压组件。如果设置为 ``0''，则解压阶段不会对文件进行任何处理。当你仅仅希望能够复制存档而不解压时，此参数将会非常有用。
+
+\item \textbf{dos:} Applies to \code{.zip} and \code{.jar} files and specifies whether to use DOS line ending conversion on text files.
+
+\medskip
+\textbf{dos:} 适用于 \code{.zip} 和 \code{.jar} 文件，并可以指定是否对文本文件所使用 DOS 格式的换行符进行转换。
+
+\item \textbf{striplevel:} Strip specified number of leading components (levels) from file names on extraction
+
+\medskip
+\textbf{striplevel:} 在提取文件时，从文件名中删除指定数量的前导组件（目录级别）。
+
+\item \textbf{subdir:} Unpacks the specific URL to the specified subdirectory within the root directory.
+
+\medskip
+\textbf{subdir:} 将特定的 URL 解压到根目录内的指定子目录中去。
+\end{itemize}
+
+The unpack call automatically decompresses and extracts files with ``.Z'', ``.z'', ``.gz'', ``.xz'', ``.zip'', ``.jar'', ``.ipk'', ``.rpm''. ``.srpm'', ``.deb'' and ``.bz2'' extensions as well as various combinations of tarball extensions.
+
+解压方法会自动解压并提取带有``.Z''，``.z''，``.gz''，``.xz''，``.zip''，``.jar''，``.ipk''，``.rpm''，``.srpm''，``.deb'' 和 ``.bz2''扩展名的文件以及各种 tarball 文件扩展名的组合。
+
+As mentioned, the Git fetcher has its own unpack method that is optimized to work with Git trees. Basically, this method works by cloning the tree into the final directory. The process is completed using references so that there is only one central copy of the Git metadata needed.
+
+如上所述，Git fetcher 有自己的解包方法，并且该方法针对 Git 树进行了优化。基本上，此方法通过将源代码树克隆到最终目录中来工作的。该过程是使用引用的方式来完成的，因此它只需要一个 Git 元数据的副本拷贝即可。
+
+\section{Fetchers}
+
+As mentioned earlier, the URL prefix determines which fetcher submodule BitBake uses. Each submodule can support different URL parameters, which are described in the following sections.
+
+前面提到过，URL 的前缀决定了 BitBake 使用哪个 fetcher 子模块。每个子模块可以支持不同的 URL 参数，这些参数将在以下部分中介绍。
+
+\subsection{Local file fetcher (\texttt{file://})}
+
+This submodule handles URLs that begin with \code{file://}. The filename you specify within the URL can be either an absolute or relative path to a file. If the filename is relative, the contents of the \bbgls{FILESPATH} variable is used in the same way \code{PATH} is used to find executables. If the file cannot be found, it is assumed that it is available in \bbgls{DL_DIR} by the time the \code{download()} method is called.
+
+此子模块处理以 \code{file://} 开头的 URL。你在 URL 中指定的文件名可以是文件的绝对路径或者是相对路径。如果文件名是相对路径，则 \bbgls{FILESPATH} 变量的使用方式与使用 \code{PATH} 变量来查找可执行文件的方式相同。如果找不到该文件，则假定在调用 download() 方法时该文件已经存在于 \bbgls{DL_DIR} 目录中。
+
+If you specify a directory, the entire directory is unpacked.
+
+如果指定的文件是一个目录，则会对整个目录进行解压。
+
+Here are a couple of example URLs, the first relative and the second absolute:
+
+以下是几个 URL 的例子，第一个是相对 URL，第二个是绝对 URL：
+
+\begin{pyglist}
+SRC_URI = "file://relativefile.patch"
+SRC_URI = "file:///Users/ich/very_important_software"
+\end{pyglist}
+
+\subsection{HTTP/FTP wget fetcher (\texttt{http://}, \texttt{ftp://}, \texttt{https://})}
+
+This fetcher obtains files from web and FTP servers. Internally, the fetcher uses the wget utility.
+
+此 fetcher 用来从 Web 和 FTP 服务器获取文件。在其内部，fetcher 是使用 wget 程序来完成下载工作的。
+
+
+The executable and parameters used are specified by the \code{FETCHCMD_wget} variable, which defaults to sensible values. The fetcher supports a parameter ``downloadfilename'' that allows the name of the downloaded file to be specified. Specifying the name of the downloaded file is useful for avoiding collisions in \bbgls{DL_DIR} when dealing with multiple files that have the same name.
+
+使用的可执行文件和参数由变量 \code{FETCHCMD_wget} 来指定的，其默认值被设置为一个合理的值。fetcher 支持使用参数 ``downloadfilename'' 来指定下载文件的名称。 在处理多个同名文件时，指定下载文件的名称有助于避免在下载目录 \bbgls{DL_DIR} 中发生冲突。
+
+If a username and password are specified in the \bbgls{SRC_URI}, a Basic Authorization header will be added to each request, including across redirects. To instead limit the Authorization header to the first request, add ``redirectauth=0'' to the list of parameters.
+
+如果在 \bbgls{SRC_URI} 中指定了用户名和密码，则每个请求将被添加一个包括重定向的基本授权标包头。如果要将授权标包头限制为第一个请求，请将 ``redirectauth=0'' 添加到参数列表中去。
+
+Some example URLs are as follows:
+
+一些 URL 的例子如下：
+
+\begin{pyglist}
+SRC_URI = "http://oe.handhelds.org/not_there.aac"
+SRC_URI = "ftp://oe.handhelds.org/not_there_as_well.aac"
+SRC_URI = "ftp://you@oe.handhelds.org/home/you/secret.plan"
+\end{pyglist}
+
+\medskip
+\begin{noteblock}{Note}%
+Because URL parameters are delimited by semi-colons, this can introduce ambiguity when parsing URLs that also contain semi-colons, for example:
+
+\medskip
+由于 URL 参数是以分号来分隔的，因此在解析包含分号的 URL 时可能会引起歧义，例如：
+
+\medskip
+\begin{pyglist}
+SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git;a=snapshot;h=a5dd47"
+\end{pyglist}
+
+\medskip
+Such URLs should should be modified by replacing semi-colons with `\&' characters:
+
+\medskip
+对于此类 URL， 应通过将分号替换为``\&'' 字符来修改此如下：
+
+\medskip
+\begin{pyglist}
+SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&a=snapshot&h=a5dd47"
+\end{pyglist}
+
+\medskip
+In most cases this should work. Treating semi-colons and `\&' in queries identically is recommended by the World Wide Web Consortium (W3C). Note that due to the nature of the URL, you may have to specify the name of the downloaded file as well:
+
+\medskip
+在大多数情况下，这种方法应该是有效的。万维网联盟 (W3C) 建议在查询中以相同方式处理分号和``\&''。请注意，由于 URL 本身的性质，你可能还必须指定下载文件的名称：
+
+\medskip
+\begin{pyglist}
+SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&a=snapshot&h=a5dd47;downloadfilename=myfile.bz2"
+\end{pyglist}
+\end{noteblock}
+
+
+\subsection{CVS fetcher (\texttt{cvs://})}
+
+This submodule handles checking out files from the CVS version control system. You can configure it using a number of different variables:
+
+此子模块负责从 CVS 版本控制系统中检出文件。你可以使用许多不同的变量来对它进行配置：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \bbgls{FETCHCMD}\code{_cvs}: The name of the executable to use when running the \code{cvs} command. This name is usually ``cvs''.
+
+\medskip
+\bbgls{FETCHCMD}\code{_cvs}: 运行 \code{cvs} 命令时要使用的可执行文件的名称。此名称通常是“cvs”。
+
+\item \bbgls{SRCDATE}: The date to use when fetching the CVS source code. A special value of ``now'' causes the checkout to be updated on every build.
+
+\medskip
+\bbgls{SRCDATE}: 获取 CVS 源代码时使用的日期。如果是使用特殊值 ``now'' 则会导致每次构建时都会更新当前已经检出的文件。
+
+\item \bbgls{CVSDIR}: Specifies where a temporary checkout is saved. The location is often \code{DL_DIR/cvs}.
+
+\medskip
+\bbgls{CVSDIR}: 指定临时检出文件的保存位置。该位置通常是 \code{DL_DIR/cvs}。
+
+\item \code{CVS_PROXY_HOST}: The name to use as a ``proxy='' parameter to the \code{cvs} command.
+
+\medskip
+\code{CVS_PROXY_HOST}: 用作 \code{cvs} 命令的 ``proxy='' 参数的主机名称。
+
+\item \code{CVS_PROXY_PORT}: The port number to use as a ``proxyport='' parameter to the \code{cvs} command.
+
+\medskip
+\code{CVS_PROXY_PORT}: 用作 \code{cvs} 命令的 ``proxyport='' 参数的端口号。
+\end{itemize}
+
+As well as the standard username and password URL syntax, you can also configure the fetcher with various URL parameters:
+
+除了标准的用户名和密码 URL 语法之外，你还可以使用其他各种 URL 参数配置 fetcher：
+
+The supported parameters are as follows:
+
+其所支持的参数如下：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{``method'':} The protocol over which to communicate with the CVS server. By default, this protocol is ``pserver''. If ``method'' is set to ``ext'', BitBake examines the ``rsh'' parameter and sets \code{CVS_RSH}. You can use ``dir'' for local directories.
+
+\medskip
+\textbf{``method'':} 与 CVS 服务器通信的协议。默认情况下，此协议为 ``pserver''。如果 ``method'' 被设置为 ``ext''，BitBake 将检查 ``rsh'' 参数并使用其值来设置 \code{CVS_RSH}。对于本地目录则可将其设置为 ``dir''。
+
+\item \textbf{``module'':} Specifies the module to check out. You must supply this parameter.
+
+\medskip
+\textbf{``module'':} 指定要检出的模块名称。此参数是必须要提供的。
+
+\item \textbf{``tag'':} Describes which CVS TAG should be used for the checkout. By default, the TAG is empty.
+
+\medskip
+\textbf{``tag'':} 描述检出文件时应使用哪个 CVS TAG。默认情况下，TAG 为空。
+
+\item \textbf{``date'':} Specifies a date. If no ``date'' is specified, the \bbgls{SRCDATE} of the configuration is used to checkout a specific date. The special value of ``now'' causes the checkout to be updated on every build.
+
+\medskip
+\textbf{``date'':} 指定要检出文件的日期。如果未​​指定 ``date''，则使用配置文件中的 \bbgls{SRCDATE} 变量作为检出日期。如使用特殊值 ``now'' 则会导致每次构建时都会对检出的文件进行更新。
+
+\item \textbf{``localdir'':} Used to rename the module. Effectively, you are renaming the output directory to which the module is unpacked. You are forcing the module into a special directory relative to \bbgls{CVSDIR}.
+
+\medskip
+\textbf{``localdir'':} 用于重新命名模块。实际上，你正在重命名模块解压的输出目录。你正在强制将模块放入一个以 \bbgls{CVSDIR} 为参考的相对路径的特殊目录中。
+
+\item \textbf{``rsh'':} Used in conjunction with the ``method'' parameter.
+
+\medskip
+\textbf{``rsh'':} 与上面提到的 ``method'' 参数一起使用。
+
+\item \textbf{``scmdata'':} Causes the CVS metadata to be maintained in the tarball the fetcher creates when set to ``keep''. The tarball is expanded into the work directory. By default, the CVS metadata is removed.
+
+\medskip
+\textbf{``scmdata'':} 设置为“keep”时，会导致 CVS 元数据保留在 fetcher 创建的 tarball 文件中。tarball 文件会被展开到工作目录中。默认情况下，CVS 的元数据会被删除掉。
+
+\item \textbf{``fullpath'':} Controls whether the resulting checkout is at the module level, which is the default, or is at deeper paths.
+
+\medskip
+\textbf{``fullpath'':} 控制最终的检出是否停留在模块级别（默认值）或者在更深的路径。
+
+\item \textbf{``norecurse'':} Causes the fetcher to only checkout the specified directory with no recurse into any subdirectories.
+
+\medskip
+\textbf{``norecurse'':} 告诉 fetcher 仅检出指定目录的源代码，而不会对此目录的任何子目录进行递归检出。
+
+\item \textbf{``port'':} The port to which the CVS server connects.
+
+\medskip
+\textbf{``port'':} CVS 服务器连接的端口。
+\end{itemize}
+Some example URLs are as follows:
+
+\medskip
+一些实例 URL 如以下示例所示：
+
+\medskip
+\begin{pyglist}
+SRC_URI = "cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
+SRC_URI = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
+\end{pyglist}
+
+\subsection{Subversion (SVN) Fetcher (svn://)}
+
+This fetcher submodule fetches code from the Subversion source control system. The executable used is specified by \code{FETCHCMD_svn}, which defaults to ``svn''. The fetcher's temporary working directory is set by \bbgls{SVNDIR}, which is usually \code{DL_DIR/svn}.
+
+此 fetcher 子模块从 Subversion 源代码控制系统提取代码。使用的可执行文件由 \code{FETCHCMD_svn} 变量指定，默认为 ``svn''。fetcher 的临时工作目录由 \bbgls{SVNDIR} 变量来设置 ，通常为 \code{DL_DIR/svn}。
+
+The supported parameters are as follows:
+\begin{itemize}
+\setlength\itemsep{1.0em}
+
+\item \textbf{``module'':} The name of the svn module to checkout. You must provide this parameter. You can think of this parameter as the top-level directory of the repository data you want.
+
+\medskip
+\textbf{``module'':} 要检出的 svn 模块的名称。你必须提供此参数。你可以将此参数视为所需代码仓库数据的顶级目录。
+
+\item \textbf{``path\_spec'':} A specific directory in which to checkout the specified svn module.
+
+\medskip
+\textbf{``path\_spec'':} 检出指定 svn 模块时使用的特定目录。
+
+\item \textbf{``protocol'':} The protocol to use, which defaults to ``svn''. If ``protocol'' is set to ``svn+ssh'', the ``ssh'' parameter is also used.
+
+\medskip
+\textbf{``protocol'':} 使用的协议，默认为 ``svn''。如果 ``protocol'' 设置为 ``svn+ssh''，则同时使用 ``ssh'' 参数。
+
+
+\item \textbf{``rev'':} The revision of the source code to checkout.
+
+\medskip
+\textbf{``rev'':} 要检出的源代码的版本号。
+
+\item \textbf{``scmdata'':} Causes the ``.svn'' directories to be available during compile-time when set to ``keep''. By default, these directories are removed.
+
+\medskip
+\textbf{``scmdata'':} 当设置为 ``keep'' 时，``.svn'' 目录在编译时是可用的。默认情况下，此目录会被删除掉。
+
+
+\item \textbf{``ssh'':} An optional parameter used when ``protocol'' is set to ``svn+ssh''. You can use this parameter to specify the ssh program used by svn.
+
+\medskip
+\textbf{``ssh'':} 当 ``protocol'' 设置为 ``svn+ssh'' 时使用的可选参数，可以通过该参数指定 svn 使用的 ssh 程序。
+
+
+\item \textbf{``transportuser'':} When required, sets the username for the transport. By default, this parameter is empty. The transport username is different than the username used in the main URL, which is passed to the subversion command.
+
+\medskip
+\textbf{``transportuser'':} 在必要的时间用来设置传输的用户名。默认情况下，此参数为空。此传输用户名是与主 URL 中使用的用户名不同，后者会传递给 subversion 命令。
+\end{itemize}
+
+\medskip
+Following are three examples using svn:
+
+以下是三个使用 svn 的示例：
+
+\begin{pyglist}
+SRC_URI = "svn://myrepos/proj1;module=vip;protocol=http;rev=667"
+SRC_URI = "svn://myrepos/proj1;module=opie;protocol=svn+ssh"
+SRC_URI = "svn://myrepos/proj1;module=trunk;protocol=http;path_spec=${MY_DIR}/proj1"
+\end{pyglist}
+
+\subsection{Git Fetcher (\texttt{git://})}
+\label{section:Git Fetcher}
+
+This fetcher submodule fetches code from the Git source control system. The fetcher works by creating a bare clone of the remote into \bbgls{GITDIR}, which is usually \code{DL_DIR/git2}. This bare clone is then cloned into the work directory during the unpack stage when a specific tree is checked out. This is done using alternates and by reference to minimize the amount of duplicate data on the disk and make the unpack process fast. The executable used can be set with \code{FETCHCMD_git}.
+
+此 fetcher 子模块从 Git 源代码控制系统提取代码。fetcher 的工作方式是将远程代码仓库克隆到 \bbgls{GITDIR} 中，通常是 \code{DL_DIR/git2}。然后在解包阶段，当检出特定代码树时，将此代码树克隆到工作目录中去。此过程是使用替代项和对代码树的引用来完成的，以最大限度地减少磁盘上的重复数据量并加快解包过程。可以使用 \code{FETCHCMD_git} 来设置要使用的可执行文件。
+
+This fetcher supports the following parameters:
+
+该 fetcher 支持以下参数：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{``protocol'':} The protocol used to fetch the files. The default is ``git'' when a hostname is set. If a hostname is not set, the Git protocol is ``file''. You can also use ``http'', ``https'', ``ssh'' and ``rsync''.
+
+\medskip
+\textbf{``protocol'':} 用于获取文件的协议。设置主机名时默认为 ``git''。如果未设置主机名，则 Git 协议为 ``file''。你还可以使用 ``http''、``https''、``ssh'' 和 ``rsync''。
+
+\medskip
+\begin{noteblock}{Note}%
+
+When \code{protocol} is ``ssh'', the URL expected in \bbgls{SRC_URI} differs from the one that is typically passed to \code{git clone} command and provided by the Git server to fetch from. For example, the URL returned by GitLab server for mesa when cloning over SSH is \code{git@gitlab.freedesktop.org:mesa/mesa.git}, however the expected URL in \bbgls{SRC_URI} is the following:
+
+\medskip
+当 \code{protocal} 为 ``ssh'' 时， \bbgls{SRC_URI} 变量所期望的 URL 与通常传递给 \code{git clone} 命令的 URL (由 Git 服务器提供) 并不相同。例如，当通过 SSH 协议对 mesa 软件包进行克隆时 ，GitLab 服务器返回的 URL 为 \code{git@gitlab.freedesktop.org:mesa/mesa.git}，但 \bbgls{SRC_URI} 变量所预期的 URL 却是如下：
+
+\medskip
+\begin{pyglist}
+SRC_URI = "git://git@gitlab.freedesktop.org/mesa/mesa.git;branch=main;protocol=ssh;..."
+\end{pyglist}
+
+\medskip
+Note the `:' character changed for a `/' before the path to the project.
+
+\medskip
+请注意，项目路径前的 `:' 字符已更改为 `/'。
+\end{noteblock}
+
+\item \textbf{``nocheckout'':} Tells the fetcher to not checkout source code when unpacking when set to ``1''. Set this option for the URL where there is a custom routine to checkout code. The default is ``0''.
+
+\medskip
+\textbf{``nocheckout'':} 当设置为 ``1'' 时，指示 fetcher 在解压时不用检查源代码。当使用自定义的路径 URL 来检出代码的时候，需要设置此选项。默认值为“0”。
+
+\item \textbf{``rebaseable'':} Indicates that the upstream Git repository can be rebased\footnotemark[1]. You should set this parameter to ``1'' if revisions can become detached from branches. In this case, the source mirror tarball is done per revision, which has a loss of efficiency. Rebasing the upstream Git repository could cause the current revision to disappear from the upstream repository. This option reminds the fetcher to preserve the local cache carefully for future use. The default value for this parameter is ``0''.
+
+\medskip
+\textbf{``rebaseable'':} 表示是否上游 Git 代码仓库允许你在另一个代码版本的基础之上重新提交内容\footnotemark[1]。如果修订版本可以与源码的分支分离，则应将此参数设置为“1”。在这种情况下，源镜像的每一个版本都会生成一个 tarball 文件，这会降低效率。但是如果重新以上游 Git 代码仓库为基础对当前内容进行提交的话，可能会导致当前的版本从上游代码仓库中消失。此选项提醒 fetcher 小心保存本地缓存以备将来使用。此参数的默认值为“0”。
+\footnotetext[1]{如果你对 git-rebase 不熟悉的话，请参阅 \url{https://git-scm.com/docs/git-rebase/zh_HANS-CN}}
+
+\item \textbf{``nobranch'':} Tells the fetcher to not check the SHA validation for the branch when set to ``1''. The default is ``0''. Set this option for the recipe that refers to the commit\footnotemark[2] that is valid for any namespace (branch, tag, …) instead of the branch.
+
+\medskip
+\textbf{``nobranch'':} 当设置为 ``1'' 的时间，告诉 fetcher 不要对代码分支的 SHA 进行查验。其默认值为“0”。如果配方中引用了此提交\footnotemark[2]并表明对所有的命名空间（分支、标签等）此提交都是有效的（而不仅仅是分支），则应该对此选项进行设置。
+
+\footnotetext[2]{有关 Git-commit，请参阅 \url{https://git-scm.com/docs/git-commit/zh_HANS-CN}}
+
+\item \textbf{``bareclone'':} Tells the fetcher to clone a bare clone into the destination directory without checking out a working tree. Only the raw Git metadata is provided. This parameter implies the ``nocheckout'' parameter as well.
+
+\medskip
+\textbf{``bareclone'':} 告诉 fetcher 仅仅将代码仓库克隆到目标目录中，而不检出一个工作版本。在这种情况下代码仓库仅仅提供原始的 Git 元数据。此参数也暗示``nocheckout'' 参数被设置成 ``1''。
+
+\item \textbf{``branch'':} The branch(es) of the Git tree to clone. Unless ``nobranch'' is set to ``1'', this is a mandatory parameter. The number of branch parameters must match the number of name parameters.
+
+\medskip
+\textbf{``branch'':} 要克隆的 Git 树的分支版本。除非 ``nobranch'' 设置为 ``1''，否则此参数是是必需参数。分支参数的数量必须与名称参数的数量匹配。
+
+\item \textbf{``rev'':} The revision to use for the checkout. The default is ``master''.
+
+\medskip
+\textbf{``rev'':} 用于检出的版本名称。默认值为 ``master''。
+
+\item \textbf{``tag'':} Specifies a tag to use for the checkout. To correctly resolve tags, BitBake must access the network. For that reason, tags are often not used. As far as Git is concerned, the ``tag'' parameter behaves effectively the same as the ``rev'' parameter.
+
+\medskip
+\textbf{``tag'':} 指定用于检出的标签。为了正确地解析标签，BitBake 必须能够访问网络。因此通常不使用标签来对代码进行检出。就 Git 而言，``tag'' 参数的行为实际上与 ``rev'' 参数相同。
+
+
+\item \textbf{``subpath'':} Limits the checkout to a specific subpath of the tree. By default, the whole tree is checked out.
+
+\medskip
+\textbf{``subpath'':} 仅仅检出代码仓库下面的某一子路径的代码。默认情况下，将检出整个代码仓库。
+
+\item \textbf{``destsuffix'':} The name of the path in which to place the checkout. By default, the path is \code{git/}.
+
+\medskip
+\textbf{``destsuffix'':} 放置检出代码的路径名称。默认情况下，路径为 \code{git/}。
+
+\item \textbf{``usehead'':} Enables local \code{git://} URLs to use the current branch HEAD as the revision for use with AUTOREV. The ``usehead'' parameter implies no branch and only works when the transfer protocol is \code{file://}.
+
+\medskip
+\textbf{``usehead'':} 允许本地 \code{git://} URL 使用当前分支的 HEAD 版本作为变量 \code{AUTOREV} 所使用的版本。“usehead” 参数表示没有代码的分支被检出，并且仅在传输协议为 \code{file://} 时才有效。
+\end{itemize}
+
+Here are some example URLs:
+
+以下是一些 URL 的例子：
+
+\begin{pyglist}
+SRC_URI = "git://github.com/fronteed/icheck.git;protocol=https;branch=${PV};tag=${PV}"
+SRC_URI = "git://github.com/asciidoc/asciidoc-py;protocol=https;branch=main"
+SRC_URI = "git://git@gitlab.freedesktop.org/mesa/mesa.git;branch=main;protocol=ssh;..."
+\end{pyglist}
+
+\begin{noteblock}{Note}%
+
+When using git as the fetcher of the main source code of your software, \href{https://docs.yoctoproject.org/ref-manual/variables.html#term-S}{S} should be set accordingly:
+
+\medskip
+当用 git 作为软件主源代码的 fetcher 的时间， 变量 \href{https://docs.yoctoproject.org/ref-manual/variables.html#term-S}{S} 应进行相应的设置：
+
+
+\begin{pyglist}
+S = "${WORKDIR}/git"
+\end{pyglist}
+\end{noteblock}
+
+\medskip
+\begin{noteblock}{Note}%
+Specifying passwords directly in \code{git://} urls is not supported. There are several reasons: \bbgls{SRC_URI} is often written out to logs and other places, and that could easily leak passwords; it is also all too easy to share metadata without removing passwords. SSH keys, \code{~/.netrc} and \code{~/.ssh/config} files can be used as alternatives.
+
+\medskip
+\code{git://} 不支持直接在 URL 中指定密码。原因有几个： \bbgls{SRC_URI} 通常会被写入日志文件和其他文件中，这很容易泄露密码；在不删除密码的情况下共享元数据也会变得非常容易。可以使用 SSH 密钥，\code{~/.netrc} 和 \code{~/.ssh/config} 文件作为密码的替代方案。
+\end{noteblock}
+
+Using tags with the git fetcher may cause surprising behaviour. Bitbake needs to resolve the tag to a specific revision and to do that, it has to connect to and use the upstream repository. This is because the revision the tags point at can change and we've seen cases of this happening in well known public repositories. This can mean many more network connections than expected and recipes may be reparsed at every build. Source mirrors will also be bypassed as the upstream repository is the only source of truth to resolve the revision accurately. For these reasons, whilst the fetcher can support tags, we recommend being specific about revisions in recipes.
+
+用 git fetcher 来检出代码仓库的某个 Git 的标签版本可能会导致某些意外行为。Bitbake 首先需要将此标签解析为某特定版本，为此，它必须连接并使用上游的 Git 代码仓库。这是因为标签指向的版本可能会发生变化。我们在一些众所周知的公共代码仓库中已经看到这种情况发生过。这可能意味着需要的网络连接要比预期的多得多，并且配方文件可能会在每次构建时被重新解析。因为上游代码仓库是能够准确解析版本的唯一真实来源，源镜像站点也将被绕过去忽略不用。出于这些原因，虽然 Git fetcher 可以支持标签，但我们还是建议在配方中具体说明要下载的版本。
+
+\subsection{Git Submodule Fetcher (\texttt{gitsm://})}
+
+This fetcher submodule inherits from the \bbsection{Git fetcher} and extends that fetcher's behavior by fetching a repository's submodules. \bbgls{SRC_URI} is passed to the Git fetcher as described in the \bbsections{Git Fetcher}{Git Fetcher (git://)} section.
+
+此 fetcher 子模块继承自Git fetcher，并通过提取代码仓库的子模块来扩展该 fetcher 的行为。如 \bbsections{Git Fetcher}{Git Fetcher (git://)} 部分所述，\bbgls{SRC_URI} 会被传递给 Git fetcher。
+
+\medskip
+\begin{noteblock}{Note}%
+
+You must clean a recipe when switching between `\code{git://}' and `\code{gitsm://}' URLs.
+
+\medskip
+在 ``\code{git://}'' 和 ``\code{gitsm://}'' URL之间切换时，必须对配方已经构建的部分进行清理。
+
+\medskip
+The Git Submodules fetcher is not a complete fetcher implementation. The fetcher has known issues where it does not use the normal source mirroring infrastructure properly. Further, the submodule sources it fetches are not visible to the licensing and source archiving infrastructures.
+
+\medskip
+Git 子模块 fetcher 并不是一个完整的 fetcher 实现。此 fetcher 存在一些已知的问题，即它不能正确地使用正常的源镜像基础功能。此外，它提取的子模块源对于许可和源归档模块的基础功能不可见。
+\end{noteblock}
+
+\subsection{ClearCase Fetcher (\texttt{ccrc://})}
+
+This fetcher submodule fetches code from a \href{http://en.wikipedia.org/wiki/Rational_ClearCase}{ClearCase} repository.
+
+该 fetcher 子模块是用于从 \href{http://en.wikipedia.org/wiki/Rational_ClearCase}{ClearCase} 代码仓库中获取源代码。
+
+To use this fetcher, make sure your recipe has proper \bbgls{SRC_URI}, \bbgls{SRCREV}, and \bbgls{PV} settings. Here is an example:
+
+要使用此 fetcher，请确保你的配方已经正确把 \bbgls{SRC_URI}、\bbgls{SRCREV} 和 \bbgls{PV} 给设置好了。以下是示例：
+
+\begin{pyglist}
+SRC_URI = "ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
+SRCREV = "EXAMPLE_CLEARCASE_TAG"
+PV = "${@d.getVar("SRCREV", False).replace("/", "+")}"
+\end{pyglist}
+
+The fetcher uses the \code{rcleartool} or \code{cleartool} remote client, depending on which one is available.
+
+fetcher 使用 \code{rcleartool} 还是 \code{cleartool} 远程客户端，具体取决于哪一个是当前可用的。
+
+Following are options for the \bbgls{SRC_URI} statement:
+
+以下是供 \bbgls{SRC_URI} 变量语句使用的选项：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{vob:} The name, which must include the prepending ``/'' character, of the ClearCase VOB. This option is required.
+\item \textbf{vob:} ClearCase VOB 的名称，必须包含前缀 ``/'' 字符。此选项是必需的。
+
+\item \textbf{module:} The module, which must include the prepending ``/'' character, in the selected VOB.
+\item \textbf{module:} 所选 VOB 中的模块，必须包含前缀 ``/'' 字符。
+\begin{noteblock}{Note}%
+The module and vob options are combined to create the load rule in the view config spec. As an example, consider the vob and module values from the \bbgls{SRC_URI} statement at the start of this section. Combining those values results in the following:
+
+\medskip
+把 module 和 vob 选项组合起来，就可以在视图配置规范中创建一个加载（load）规则。例如，请考虑本节开头的例子中的 \bbgls{SRC_URI} 语句中的 \code{vob} 和 \code{module} 值。把这些值组合在一起就可得到以下结果：
+
+\begin{pyglist}
+load /example_vob/example_module
+\end{pyglist}
+\end{noteblock}
+
+\item \textbf{proto:} The protocol, which can be either http or https.
+
+\medskip
+\textbf{proto:} 协议名称，可以是 \code{http} 或 \code{https}。
+\end{itemize}
+
+By default, the fetcher creates a configuration specification. If you want this specification written to an area other than the default, use the \code{CCASE_CUSTOM_CONFIG_SPEC} variable in your recipe to define where the specification is written.
+
+默认情况下，fetcher 会创建一个配置规范。如果你希望将此规范写入默认区域以外的地方，请使用配方中的变量 \code{CCASE_CUSTOM_CONFIG_SPEC} 来定义你所期望的规范的写入位置。
+
+\medskip
+\begin{noteblock}{Note}%
+the \bbgls{SRCREV} loses its functionality if you specify this variable. However, \bbgls{SRCREV} is still used to label the archive after a fetch even though it does not define what is fetched.
+
+\medskip
+如果此变量（\code{CCASE_CUSTOM_CONFIG_SPEC}）被赋予了一个值，则 \bbgls{SRCREV} 变量的值将被忽略。但是，即使 \bbgls{SRCREV} 的值没有被定义为 fetcher 所获取的内容，它仍可用于标记 fetcher 所获得的文件档案。
+\end{noteblock}
+
+Here are a couple of other behaviors worth mentioning:
+
+以下是其他一些值得一提的行为：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item When using \code{cleartool}, the login of \code{cleartool} is handled by the system. The login require no special steps.
+
+\medskip
+当使用 \code{cleartool} 时，\code{cleartool} 的登录是由系统自动处理的，因此登录不需要特殊的步骤。
+
+\item In order to use \code{rcleartool} with authenticated users, an ``rcleartool login'' is necessary before using the fetcher.
+
+\medskip
+为了与经过身份验证的用户一起使用 \code{rcleartool}，在使用 fetcher 之前必须进行 ``rcleartool login''。
+\end{itemize}
+
+\subsection{Perforce Fetcher (\texttt{p4://})}
+
+This fetcher submodule fetches code from the \href{https://www.perforce.com/}{Perforce} source control system. The executable used is specified by \code{FETCHCMD_p4}, which defaults to ``p4''. The fetcher's temporary working directory is set by \bbgls{P4DIR}, which defaults to ``\code{DL_DIR/p4}''. The fetcher does not make use of a perforce client, instead it relies on p4 files to retrieve a list of files and p4 print to transfer the content of those files locally.
+
+此 fetcher 子模块用于从 Perforce 源代码控制系统提取代码。使用的可执行文件由 \code{FETCHCMD_p4} 变量来指定，默认值为 ``p4''。fetcher 的临时工作目录由 \bbgls{P4DIR} 变量来设置，默认值为 ``DL\_DIR/p4''。fetcher 不需要使用 perforce 的客户端软件，而是依靠 \code{p4 files} 命令来检索文件列表并使用 \code{p4 print} 命令在本地传输这些文件的内容。
+
+To use this fetcher, make sure your recipe has proper \bbgls{SRC_URI}, \bbgls{SRCREV}, and \bbgls{PV} values. The p4 executable is able to use the config file defined by your system's \code{P4CONFIG} environment variable in order to define the Perforce server URL and port, username, and password if you do not wish to keep those values in a recipe itself. If you choose not to use \code{P4CONFIG}, or to explicitly set variables that \code{P4CONFIG} can contain, you can specify the \code{P4PORT} value, which is the server's URL and port number, and you can specify a username and password directly in your recipe within \bbgls{SRC_URI}.
+
+要使用此 fetcher，请确保你的配方具有正确的 \bbgls{SRC_URI}、\bbgls{SRCREV} 和 \bbgls{PV} 值。如果你不希望在配方本身中保留这些值，则 p4 的可执行文件能够使用由系统环境变量 \code{P4CONFIG} 所定义的配置文件来定义 Perforce 服务器的 URL 和端口、用户名和密码。如果你选择不使用 \code{P4CONFIG}，或者选择明确设置 \code{P4CONFIG} 所包含的其他变量，则可以设定 \code{P4PORT} 变量的值，即服务器的 URL 和端口号，并且你可以在配方中的 \bbgls{SRC_URI} 变量中直接指定用户名和密码。
+
+Here is an example that relies on \code{P4CONFIG} to specify the server URL and port, username, and password, and fetches the Head Revision:
+
+下面是一个依赖于 \code{P4CONFIG} 变量来指定服务器的 URL 和端口、用户名和密码并获取最新版本（Head Revision）的示例：
+
+\begin{pyglist}
+SRC_URI = "p4://example-depot/main/source/..."
+SRCREV = "${AUTOREV}"
+PV = "p4-${SRCPV}"
+S = "${WORKDIR}/p4"
+\end{pyglist}
+
+Here is an example that specifies the server URL and port, username, and password, and fetches a Revision based on a Label:
+
+下面是一个指定服务器的 URL 和端口、用户名和密码并根据标签获取特定版本的示例：
+
+\begin{pyglist}
+P4PORT = "tcp:p4server.example.net:1666"
+SRC_URI = "p4://user:passwd@example-depot/main/source/..."
+SRCREV = "release-1.0"
+PV = "p4-${SRCPV}"
+S = "${WORKDIR}/p4"
+\end{pyglist}
+
+\medskip
+\begin{noteblock}{Note}%
+You should always set \href{https://docs.yoctoproject.org/ref-manual/variables.html#term-S}{S} to ``\$\{WORKDIR\}/p4'' in your recipe.
+
+\medskip
+配方中的 \href{https://docs.yoctoproject.org/ref-manual/variables.html#term-S}{S} 变量应设置为 \code{“${WORKDIR}/p4”}。
+\end{noteblock}
+
+By default, the fetcher strips the depot location from the local file paths. In the above example, the content of \code{example-depot/main/source/} will be placed in \code{${WORKDIR}/p4}. For situations where preserving parts of the remote depot paths locally is desirable, the fetcher supports two parameters:
+
+默认情况下，fetcher 会从本地文件路径中删除软件仓库的位置。在上面的例子中，\code{example-depot/main/source/} 的内容将被放置 \code{${WORKDIR}/p4} 目录中。在如果需要在本地保留部分远程软件仓库路径的情况，fetcher 支持两个参数：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{``module'':}\par
+The top-level depot location or directory to fetch. The value of this parameter can also point to a single file within the depot, in which case the local file path will include the module path.
+
+\medskip
+要获取的代码仓库的顶级位置或目录名称。此参数的值还可以指向代码仓库中的单个文件，在这种情况下，本地文件路径将包含模块的路径。
+
+\item \textbf{``remotepath'':}\par
+When used with the value ``\code{keep}'', the fetcher will mirror the full depot paths locally for the specified location, even in combination with the \code{module} parameter.
+
+\medskip
+当被设定为 ``keep'' 值时，fetcher 将在本地为指定的代码仓库建立一个完整的镜像，甚至可以与 \code{module} 参数结合使用。
+\end{itemize}
+
+Here is an example use of the the module parameter:
+
+以下是该 \code{module} 参数的使用示例：
+
+\begin{pyglist}
+SRC_URI = "p4://user:passwd@example-depot/main;module=source/..."
+\end{pyglist}
+
+In this case, the content of the top-level directory \code{source/} will be fetched to \code{${P4DIR}}, including the directory itself. The top-level directory will be accesible at \code{${P4DIR}/source/}.
+
+在这种情况下，顶级目录 \code{source/} 的内容，包括目录本身，都将被提取到 \code{${P4DIR}} 中去。顶级目录将可通过 \code{${P4DIR}/source/} 来访问。
+
+Here is an example use of the the \code{remotepath} parameter:
+
+以下是参数 \code{remotepath} 的使用示例：
+
+\begin{pyglist}
+SRC_URI = "p4://user:passwd@example-depot/main;module=source/...;remotepath=keep"
+\end{pyglist}
+
+In this case, the content of the top-level directory \code{source/} will be fetched to \code{${P4DIR}}, but the complete depot paths will be mirrored locally. The top-level directory will be accessible at \code{${P4DIR}/example-depot/main/source/}.
+
+在这种情况下，顶级目录 \code{source/} 的内容将被提取到 \code{${P4DIR}}，但完整的仓库路径将在本地被镜像复制。顶级目录将可通过 \code{${P4DIR}/example-depot/main/source/} 来进行访问 。
+
+\subsection{Repo Fetcher (\texttt{repo://})}
+
+This fetcher submodule fetches code from \code{google-repo} source control system. The fetcher works by initiating and syncing sources of the repository into \bbgls{REPODIR}, which is usually \code{${DL_DIR}/repo}.
+
+此 fetcher 子模块用于从 google-repo 源代码控制系统中来提取代码。fetcher 会初始化和把代码仓库的源代码同步到 \bbgls{REPODIR} 目录中（通常是 \code{${DL_DIR}/repo} ）。
+
+This fetcher supports the following parameters:
+
+该 fetcher 支持以下参数：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{``protocol'':} Protocol to fetch the repository manifest (default: git).
+\item \textbf{``protocol'':} 获取代码仓库清单的协议（默认值：git）。
+
+\item \textbf{``branch'':} Branch or tag of repository to get (default: master).
+\item \textbf{``branch'':} 要获取的代码仓库的分支或标签（默认值：master）。
+
+\item \textbf{``manifest'':} Name of the manifest file (default: \code{default.xml}).
+\item \textbf{``manifest'':} 清单文件的名称（默认值：\code{default.xml}）。
+\end{itemize}
+
+Here are some example URLs:
+
+以下是一些 URL 示例：
+
+\begin{pyglist}
+SRC_URI = "repo://REPOROOT;protocol=git;branch=some_branch;manifest=my_manifest.xml"
+SRC_URI = "repo://REPOROOT;protocol=file;branch=some_branch;manifest=my_manifest.xml"
+\end{pyglist}
+
+\subsection{Az Fetcher (\texttt{az://})}
+\label{section:Az Fetcher}
+
+This submodule fetches data from an \href{https://docs.microsoft.com/en-us/azure/storage/}{Azure Storage account} , it inherits its functionality from the HTTP wget fetcher, but modifies its behavior to accomodate the usage of a \href{https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview}{Shared Access Signature (SAS)} for non-public data.
+
+该 fetcher 是用于从 \href{https://docs.microsoft.com/en-us/azure/storage/}{Azure 存储帐户}获取数据，它继承了 HTTP wget fetcher 的功能，但做了一些修改以适应对非公开数据使用\href{https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview}{共享访问签名 (SAS)} 。
+
+Such functionality is set by the variable:
+
+此功能由下面的变量来设置：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \bbgls{AZ_SAS}: The Azure Storage Shared Access Signature provides secure delegate access to resources, if this variable is set, the Az Fetcher will use it when fetching artifacts from the cloud.
+
+\item \bbgls{AZ_SAS}: Azure 存储共享访问签名提供了对资源的安全委托访问，如果设置了此变量，Az Fetcher 将在从云中获取项目的时间使用此变量值。
+
+\end{itemize}
+
+You can specify the \bbgls{AZ_SAS} variable as shown below:
+
+你可以按照下面的例子来指定 \bbgls{AZ_SAS} 变量，：
+
+\begin{pyglist}
+AZ_SAS = "se=2021-01-01&sp=r&sv=2018-11-09&sr=c&skoid=<skoid>&sig=<signature>"
+\end{pyglist}
+
+Here is an example URL:
+
+下面是一个 URL 示例：
+
+\begin{pyglist}
+SRC_URI = "az://<azure-storage-account>.blob.core.windows.net/<foo_container>/<bar_file>"
+\end{pyglist}
+
+It can also be used when setting mirrors definitions using the \bbgls{PREMIRRORS} variable.
+
+它也可以在利用 \bbgls{PREMIRRORS} 变量来设置镜像定义的时间使用。
+
+\subsection{GCP Fetcher (\texttt{gs://})}
+
+This submodule fetches data from a \href{https://cloud.google.com/storage/docs/buckets}{Google Cloud Storage Bucket}. It uses the \href{https://cloud.google.com/python/docs/reference/storage/latest}{Google Cloud Storage Python Client} to check the status of objects in the bucket and download them. The use of the Python client makes it substantially faster than using command line tools such as gsutil.
+
+此 fetcher 子模块是从 \href{https://cloud.google.com/storage/docs/buckets}{Google Cloud Storage Bucket} 中提取数据。它使用 \href{https://cloud.google.com/python/docs/reference/storage/latest}{Google Cloud Storage Python 客户端} 来检查存储桶中（Storage Bucket）的对象的状态并下载它们。使用 Python 客户端比使用 gsutil 等命令行工具要快得多。
+
+The fetcher requires the Google Cloud Storage Python Client to be installed, along with the gsutil tool.
+
+该 fetcher 需要安装 Google Cloud Storage Python 客户端以及 gsutil 工具。
+
+The fetcher requires that the machine has valid credentials for accessing the chosen bucket. Instructions for authentication can be found in the \href{https://cloud.google.com/docs/authentication/provide-credentials-adc#local-dev}{Google Cloud documentation}.
+
+获取程序要求构建主机具有访问所选存储桶（storage bucket）的有效身份认证。身份验证说明可在 \href{https://cloud.google.com/docs/authentication/provide-credentials-adc#local-dev}{Google Cloud 文档}中找到。
+
+
+
+If it used from the OpenEmbedded build system, the fetcher can be used for fetching sstate artifacts from a GCS bucket by specifying the \code{SSTATE_MIRRORS} variable as shown below:
+
+如果 fetcher 是在 OpenEmbedded 构建系统中使用的，则可以通过指定 \code{SSTATE_MIRRORS} 变量来使用 fetcher 从 GCS 存储桶(butcket) 中获取 sstate 构件，如下所示：
+
+\begin{pyglist}
+SSTATE_MIRRORS ?= "\
+    file://.* gs://<bucket name>/PATH \
+"
+\end{pyglist}
+
+The fetcher can also be used in recipes:
+
+fetcher 也可以用于配方中：
+
+\begin{pyglist}
+SRC_URI = "gs://<bucket name>/<foo_container>/<bar_file>"
+\end{pyglist}
+
+However, the checksum of the file should be also be provided:
+
+但是，还应提供文件的校验和：
+
+\begin{pyglist}
+SRC_URI[sha256sum] = "<sha256 string>"
+\end{pyglist}
+
+\subsection{Crate Fetcher (\texttt{crate://})}
+
+This submodule fetches code for \href{https://doc.rust-lang.org/reference/glossary.html?highlight=crate#crate}{Rust language ``crates''} corresponding to Rust libraries and programs to compile. Such crates are typically shared on \url{https://crates.io/} but this fetcher supports other crate registries too.
+
+此 fetcher 子模块用于获取与要编译的 Rust 库和程序相对应的 \href{https://doc.rust-lang.org/reference/glossary.html?highlight=crate#crate}{Rust 语言“crate”代码}。此类的 ``crate'' 代码通常通过 \url{https://crates.io/} 网站来共享，但此 fetcher 也支持其他 crate 共享注册登记。
+
+The format for the \bbgls{SRC_URI} setting must be:
+
+\bbgls{SRC_URI} 变量的设置格式必须为：
+
+\begin{pyglist}
+SRC_URI = "crate://REGISTRY/NAME/VERSION"
+\end{pyglist}
+
+Here is an example URL:
+
+URL 示例如下：
+
+\begin{pyglist}
+SRC_URI = "crate://crates.io/glob/0.2.11"
+\end{pyglist}
+
+\subsection{NPM Fetcher (\texttt{npm://})}
+
+This submodule fetches source code from an \href{https://en.wikipedia.org/wiki/Npm_(software)}{NPM} Javascript package registry.
+
+该 fetcher 子模块用于从 \href{https://en.wikipedia.org/wiki/Npm_(software)}{NPM} 的 Javascript 包登记册中获取源代码。
+
+The format for the \bbgls{SRC_URI} setting must be:
+
+\bbgls{SRC_URI} 变量的设置格式必须为：
+
+\begin{pyglist}
+SRC_URI = "npm://some.registry.url;ParameterA=xxx;ParameterB=xxx;..."
+\end{pyglist}
+
+This fetcher supports the following parameters:
+
+该 fetcher 支持以下参数：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{``package'':} The NPM package name. This is a mandatory parameter.
+\item \textbf{``package'':} NPM 包的名称。这是一个必需的参数。
+
+\item \textbf{``version'':} The NPM package version. This is a mandatory parameter.
+\item \textbf{``version'':} NPM 包的版本。这是一个必需的参数。
+
+\item \textbf{``downloadfilename'':} Specifies the filename used when storing the downloaded file.
+\item \textbf{``downloadfilename'':} 指定保存下载文件时使用的文件名。
+
+\item \textbf{``destsuffix'':} Specifies the directory to use to unpack the package (default: \code{npm}).
+\item \textbf{``destsuffix'':} 指定用于解压包的目录（默认值：\code{npm}）。
+\end{itemize}
+
+Note that NPM fetcher only fetches the package source itself. The dependencies can be fetched through the \bbsections{npmsw-fetcher}{npmsw-fetcher}.
+
+注意，NPM fetcher 仅获取包的源代码。包的依赖项可以通过 \bbsections{npmsw-fetcher}{npmsw-fetcher} 来获取。
+
+Here is an example URL with both fetchers:
+
+以下是包含两个 fetcher 的示例 URL：
+
+\begin{pyglist}
+SRC_URI = " \
+    npm://registry.npmjs.org/;package=cute-files;version=${PV} \
+    npmsw://${THISDIR}/${BPN}/npm-shrinkwrap.json \
+    "
+\end{pyglist}
+
+See \href{https://docs.yoctoproject.org/dev-manual/packages.html#creating-node-package-manager-npm-packages}{Creating Node Package Manager (NPM) Packages} in the Yocto Project manual for details about using \href{https://docs.yoctoproject.org/ref-manual/devtool-reference.html}{devtool} to automatically create a recipe from an NPM URL.
+
+有关使用 \href{https://docs.yoctoproject.org/ref-manual/devtool-reference.html}{devtool} 从 NPM URL 自动创建一个配方的详细信息，请参阅 Yocto 项目手册中的  \href{https://docs.yoctoproject.org/dev-manual/packages.html#creating-node-package-manager-npm-packages}{Creating Node Package Manager (NPM) Packages} 部分。
+
+\subsection{NPM shrinkwrap Fetcher (\texttt{npmsw://})}
+\label{section:npmsw-fetcher}
+
+This submodule fetches source code from an \href{https://docs.npmjs.com/cli/v8/commands/npm-shrinkwrap}{NPM shrinkwrap} description file, which lists the dependencies of an NPM package while locking their versions.
+
+该 fetcher 子模块用于从 \href{https://docs.npmjs.com/cli/v8/commands/npm-shrinkwrap}{NPM shrinkwrap} 的描述文件中获取源代码，该文件列出了特定版本的 NPM 包的依赖项。
+
+The format for the \bbgls{SRC_URI} setting must be:
+
+\bbgls{SRC_URI} 变量的设置格式必须为：
+
+\begin{pyglist}
+SRC_URI = "npmsw://some.registry.url;ParameterA=xxx;ParameterB=xxx;..."
+\end{pyglist}
+
+This fetcher supports the following parameters:
+
+该 fetcher 支持以下参数：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item \textbf{``dev'':} Set this parameter to 1 to install ``devDependencies''.
+\item \textbf{``dev'':} 设置此参数以 ``1'' 以安装 ``devDependencies''。
+
+\item \textbf{``destsuffix'':} Specifies the directory to use to unpack the dependencies (\code{${S}} by default)\footnotemark[1].
+\item \textbf{``destsuffix'':} 指定用于解压依赖项的目录（默认为 \code{${S}}）\footnotemark[1]。
+\end{itemize}
+\footnotetext[1]{ 关于 \code{${S}}，请参阅 \url{https://docs.yoctoproject.org/ref-manual/variables.html\#term-S}}
+
+Note that the shrinkwrap file can also be provided by the recipe for the package which has such dependencies, for example:
+
+请注意，shrinkwrap 文件也可以由具有此类依赖项的包的配方来提供，例如：
+
+\begin{pyglist}
+SRC_URI = " \
+    npm://registry.npmjs.org/;package=cute-files;version=${PV} \
+    npmsw://${THISDIR}/${BPN}/npm-shrinkwrap.json \
+    "
+\end{pyglist}
+
+Such a file can automatically be generated using \href{https://docs.yoctoproject.org/ref-manual/devtool-reference.html}{devtool} as described in the \href{https://docs.yoctoproject.org/dev-manual/packages.html#creating-node-package-manager-npm-packages}{Creating Node Package Manager (NPM) Packages} section of the Yocto Project.
+
+可以使用 \href{https://docs.yoctoproject.org/ref-manual/devtool-reference.html}{devtool} 自动生成此类文件。请参阅 Yocto 项目的 \href{https://docs.yoctoproject.org/dev-manual/packages.html#creating-node-package-manager-npm-packages}{Creating Node Package Manager (NPM) Packages} 部分。
+
+\subsection{Other Fetchers}
+\label{section:Fetchers}
+
+Fetch submodules also exist for the following:
+下列格式的URL也存在 fetcher 子模块：
+
+\begin{itemize}
+\setlength\itemsep{1.0em}
+\item Bazaar (\code{bzr://})
+
+\item Mercurial (\code{hg://})
+
+\item OSC (\code{osc://})
+
+\item S3 (\code{s3://})
+
+\item Secure FTP (\code{sftp://})
+
+\item Secure Shell (\code{ssh://})
+
+\item Trees using Git Annex (\code{gitannex://})
+\end{itemize}
+
+No documentation currently exists for these lesser used fetcher submodules. However, you might find the code helpful and readable.
+
+目前还没有关于这些很少使用的 fetcher 子模块的文档。但是你可能会发现源代码会很有帮助并且也很容易阅读和理解。
+
+\section{Auto Revisions}
+
+We need to document \code{AUTOREV} and \bbgls{SRCREV_FORMAT} here.
+
+我们需要在这里添加有关 \code{AUTOREV} 和 \bbgls{SRCREV_FORMAT} 的文档。

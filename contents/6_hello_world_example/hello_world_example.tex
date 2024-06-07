@@ -1,0 +1,489 @@
+\newchapter{Hello World Example}{Hello World 示例}
+
+\newsection{BitBake Hello World}{BitBake 版本的 Hello World}
+
+The simplest example commonly used to demonstrate any new programming language or tool is the “\href{http://en.wikipedia.org/wiki/Hello_world_program}{Hello World}” example. This appendix demonstrates, in tutorial form, Hello World within the context of BitBake. The tutorial describes how to create a new project and the applicable metadata files necessary to allow BitBake to build it.
+
+用来演示任何新编程语言或工具的最简单示例是 ``Hello World'' 示例。本附录以教程形式演示了 BitBake 语言版的 Hello World。本教程介绍了如何创建新项目以及允许 BitBake 构建该项目所需的适用元数据文件。
+
+\newsection{Obtaining BitBake}{获取BitBake}
+
+See the \bbsection{Obtaining BitBake} section for information on how to obtain BitBake. Once you have the source code on your machine, the BitBake directory appears as follows:
+
+有关如何获取 BitBake 的信息，请参阅 \bbsections{Obtaining BitBake}{获取 BitBake} 部分。一旦你的构建主机上有了 BitBake 的源代码，BitBake 目录就会显示如下：
+
+\begin{pyglist}
+$ ls -al
+total 108
+drwxr-xr-x  9 fawkh 10000  4096 feb 24 12:10 .
+drwx------ 36 fawkh 10000  4096 mar  2 17:00 ..
+-rw-r--r--  1 fawkh 10000   365 feb 24 12:10 AUTHORS
+drwxr-xr-x  2 fawkh 10000  4096 feb 24 12:10 bin
+-rw-r--r--  1 fawkh 10000 16501 feb 24 12:10 ChangeLog
+drwxr-xr-x  2 fawkh 10000  4096 feb 24 12:10 classes
+drwxr-xr-x  2 fawkh 10000  4096 feb 24 12:10 conf
+drwxr-xr-x  5 fawkh 10000  4096 feb 24 12:10 contrib
+drwxr-xr-x  6 fawkh 10000  4096 feb 24 12:10 doc
+drwxr-xr-x  8 fawkh 10000  4096 mar  2 16:26 .git
+-rw-r--r--  1 fawkh 10000    31 feb 24 12:10 .gitattributes
+-rw-r--r--  1 fawkh 10000   392 feb 24 12:10 .gitignore
+drwxr-xr-x 13 fawkh 10000  4096 feb 24 12:11 lib
+-rw-r--r--  1 fawkh 10000  1224 feb 24 12:10 LICENSE
+-rw-r--r--  1 fawkh 10000 15394 feb 24 12:10 LICENSE.GPL-2.0-only
+-rw-r--r--  1 fawkh 10000  1286 feb 24 12:10 LICENSE.MIT
+-rw-r--r--  1 fawkh 10000   229 feb 24 12:10 MANIFEST.in
+-rw-r--r--  1 fawkh 10000  2413 feb 24 12:10 README
+-rw-r--r--  1 fawkh 10000    43 feb 24 12:10 toaster-requirements.txt
+-rw-r--r--  1 fawkh 10000  2887 feb 24 12:10 TODO
+\end{pyglist}
+
+At this point, you should have BitBake cloned to a directory that matches the previous listing except for dates and user names.
+
+此时，你应该已经将 BitBake 克隆到与前面的列表相似的目录中了（日期和用户名除外）。
+
+\newsection{Setting Up the BitBake Environment}{设置BitBake环境}
+
+First, you need to be sure that you can run BitBake. Set your working directory to where your local BitBake files are and run the following command:
+
+首先，你需要确保你可以运行 BitBake。将你的工作目录设置为本地 BitBake 文件所在的位置，然后运行以下命令：
+
+\begin{pyglist}
+$ ./bin/bitbake --version
+BitBake Build Tool Core version 2.3.1
+\end{pyglist}
+
+The console output tells you what version you are running.
+
+电脑终端的输出会告诉你正在运行 BitBake 的版本。
+
+The recommended method to run BitBake is from a directory of your choice. To be able to run BitBake from any directory, you need to add the executable binary to your binary to your shell’s environment PATH variable. First, look at your current PATH variable by entering the following:
+
+建议从你自己选择的目录中运行 BitBake。为了能够从任何目录运行 BitBake，你需要将可执行的二进制文件添加到 shell 的环境变量 \code{PATH} 中。首先，通过输入以下命令来查看当前变量\code{PATH} 的内容：
+
+\begin{pyglist}
+$ echo $PATH
+\end{pyglist}
+
+Next, add the directory location for the BitBake binary to the PATH. Here is an example that adds the \code{/home/scott-lenovo/bitbake/bin} directory to the front of the PATH variable:
+
+接下来，将 BitBake 的二进制可执行文件所在的目录位置添加到 \code{PATH}。下面是一个将 \code{/home/scott-lenovo/bitbake/bin} 目录添加到 \code{PATH} 变量的前面的示例：
+
+\begin{pyglist}
+$ export PATH=/home/scott-lenovo/bitbake/bin:$PATH
+\end{pyglist}
+
+You should now be able to enter the \code{bitbake} command from the command line while working from any directory.
+
+现在你应该能够在任何目录中工作时从命令行输入并执行 \code{bitbake} 命令。
+
+\newsection{The Hello World Example}{Hello World 示例}
+
+The overall goal of this exercise is to build a complete “Hello World” example utilizing task and layer concepts. Because this is how modern projects such as OpenEmbedded and the Yocto Project utilize BitBake, the example provides an excellent starting point for understanding BitBake.
+
+本示例练习的总体目标是利用任务和层的概念构建一个完整的“Hello World”示例。由于这也是 OpenEmbedded 和 Yocto Project 等现代项目利用 BitBake 的方式，因此该示例为理解 BitBake 提供了一个极好的起点。
+
+To help you understand how to use BitBake to build targets, the example starts with nothing but the bitbake command, which causes BitBake to fail and report problems. The example progresses by adding pieces to the build to eventually conclude with a working, minimal “Hello World” example.
+
+为了帮助你了解如何使用 BitBake 来构建目标，示例从只使用 \code{bitbake} 命令开始，这会导致 BitBake 失败并报告错误。示例通过向构建中逐步地添加部分内容来达到最终完成一个可运行的、最小的 ``Hello World'' 示例结束。
+
+While every attempt is made to explain what is happening during the example, the descriptions cannot cover everything. You can find further information throughout this manual. Also, you can actively participate in the \url{https://lists.openembedded.org/g/bitbake-devel} discussion mailing list about the BitBake build tool.
+
+尽管我们会尽力解释示例过程中发生的情况，但这些描述还是无法涵盖所有的​​内容。你可以在本手册中找到更多帮助信息。此外，你还可以积极参与有关 BitBake 构建工具的\url{https://lists.openembedded.org/g/bitbake-devel} 讨论邮件列表。
+
+\begin{noteblock}{Note}%
+This example was inspired by and drew heavily from \href{https://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html}{Mailing List post - The BitBake equivalent of “Hello, World!”}.
+
+\medskip
+此示例受到了此邮件列表帖子的启发并大量借鉴了其中的代码 - \href{https://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html}{The BitBake equivalent of "Hello, World!"}。
+\end{noteblock}
+
+As stated earlier, the goal of this example is to eventually compile “Hello World”. However, it is unknown what BitBake needs and what you have to provide in order to achieve that goal. Recall that BitBake utilizes three types of metadata files: \bbsection{Configuration Files}, \bbsection{Classes}, and \bbsection{Recipes}. But where do they go? How does BitBake find them? BitBake’s error messaging helps you answer these types of questions and helps you better understand exactly what is going on.
+
+如前所述，此示例的目标是最终能够编译 ``Hello World''。但是我们尚不清楚 BitBake 需要什么以及你必须提供什么才能实现该目标。回想一下，BitBake 使用三种类型的元数据文件： 配置文件、 类和 配方。但现在它们都去哪里了？BitBake 如何找到它们？BitBake 的错误消息可帮助你回答这些类型的问题，并帮助你更好地了解到底发生了什么。
+
+Following is the complete “Hello World” example.
+
+以下是完整的“Hello World”示例。
+
+\begin{enumerate}
+\setlength\itemsep{1.0em}
+\item \textbf{Create a Project Directory:} First, set up a directory for the “Hello World” project. Here is how you can do so in your home directory:
+
+\medskip
+\textbf{创建项目目录:} 首先，为 ``Hello World'' 项目设置一个目录。以下是在主目录中执行此操作的方法：
+
+\begin{pyglist}
+$ mkdir ~/hello
+$ cd ~/hello
+\end{pyglist}
+
+\medskip
+This is the directory that BitBake will use to do all of its work. You can use this directory to keep all the metafiles needed by BitBake. Having a project directory is a good way to isolate your project.
+
+\medskip
+这个目录是 BitBake 用于完成所有工作的目录。你可以使用此目录保存 BitBake 所需的所有元文件。拥有一个单独的项目目录是与其他项目进行隔离的好方法。
+
+\item \textbf{Run BitBake:} At this point, you have nothing but a project directory. Run the bitbake command and see what it does:
+
+\medskip
+\textbf{运行 BitBake:} 此时，你只有一个项目目录。运行 \code{bitbake} 命令并查看它都做了些什么工作：
+
+\medskip
+\begin{pyglist}
+$ bitbake
+ERROR: The BBPATH variable is not set and bitbake did not find a conf/bblayers.conf file in the expected location.
+Maybe you accidentally invoked bitbake from the wrong directory?
+\end{pyglist}
+
+\medskip
+When you run BitBake, it begins looking for metadata files. The \bbgls{BBPATH} variable is what tells BitBake where to look for those files. \bbgls{BBPATH} is not set and you need to set it. Without \bbgls{BBPATH}, BitBake cannot find any configuration files (\code{.conf}) or recipe files (\code{.bb}) at all. BitBake also cannot find the \code{bitbake.conf} file.
+
+\medskip
+当你运行 BitBake 时，它​​会开始查找元数据文件。 \bbgls{BBPATH} 变量会告诉 BitBake 在哪里查找这些文件。\bbgls{BBPATH}并未被设置，你需要设置它。 没有 \bbgls{BBPATH}，BitBake 根本找不到任何配置文件 ( \code{.conf}) 或配方文件 ( \code{.bb})。 BitBake 也找不到 \code{bitbake.conf} 文件。
+
+\item \textbf{Setting BBPATH:} For this example, you can set \bbgls{BBPATH} in the same manner that you set \code{PATH} earlier in the appendix. You should realize, though, that it is much more flexible to set the \bbgls{BBPATH} variable up in a configuration file for each project.
+
+\medskip
+\textbf{设置 BBPATH:} 对于此示例，你可以按照前面附录中设置 \code{PATH} 变量的方式来设置 \bbgls{BBPATH}。不过，你应该意识到，在每个项目的配置文件中设置 \bbgls{BBPATH} 变量要灵活得多。
+
+\medskip
+From your shell, enter the following commands to set and export the \bbgls{BBPATH} variable:
+
+\medskip
+在你的 shell 中，输入以下命令来设置和导出 \bbgls{BBPATH} 变量：
+
+\begin{pyglist}
+$ BBPATH="projectdirectory"
+$ export BBPATH
+\end{pyglist}
+
+\medskip
+Use your actual project directory in the command. BitBake uses that directory to find the metadata it needs for your project.
+
+\medskip
+在命令中使用你的实际项目目录来代替 ``projectdirectory''。BitBake 会使用该目录来查找项目所需的元数据。
+\begin{noteblock}{Note}%
+
+\medskip      
+When specifying your project directory, do not use the tilde (“\code{~}”) character as BitBake does not expand that character as the shell would.
+
+\medskip
+在指定项目目录时，请不要使用波浪符号（“\code{~}”），因为 BitBake 不会像 shell 那样扩展该字符。
+\end{noteblock}
+
+\item \textbf{Run BitBake:} Now that you have \bbgls{BBPATH} defined, run the bitbake command again:
+
+\medskip
+\textbf{运行 BitBake:} 现在你已经定义了 \bbgls{BBPATH}，请再次运行该 \code{bitbake} 命令：
+
+\medskip
+\begin{pyglist}
+$ bitbake
+ERROR: Unable to parse /home/scott-lenovo/bitbake/lib/bb/parse/__init__.py
+Traceback (most recent call last):
+File "/home/scott-lenovo/bitbake/lib/bb/parse/__init__.py", line 127, in resolve_file(fn='conf/bitbake.conf', d=<bb.data_smart.DataSmart object at 0x7f22919a3df0>):
+      if not newfn:
+>            raise IOError(errno.ENOENT, "file %s not found in %s" % (fn, bbpath))
+      fn = newfn
+FileNotFoundError: [Errno 2] file conf/bitbake.conf not found in <projectdirectory>
+\end{pyglist}
+
+\medskip
+This sample output shows that BitBake could not find the conf/bitbake.conf file in the project directory. This file is the first thing BitBake must find in order to build a target. And, since the project directory for this example is empty, you need to provide a conf/bitbake.conf file.
+
+\medskip
+此示例的输出显示 BitBake 无法在项目目录中找到该 \code{conf/bitbake.conf} 文件。此文件是 BitBake 构建目标时必须找到的第一件东西。而且，由于此示例的项目目录为空，因此你需要提供一个 \code{conf/bitbake.conf} 文件。
+
+\item \textbf{Creating conf/bitbake.conf:} The \code{conf/bitbake.conf} includes a number of configuration variables BitBake uses for metadata and recipe files. For this example, you need to create the file in your project directory and define some key BitBake variables. For more information on the \code{bitbake.conf} file, see \url{https://git.openembedded.org/bitbake/tree/conf/bitbake.conf}.
+
+\medskip
+\textbf{创建 conf/bitbake.conf:} \code{conf/bitbake.conf} 文件包括了 BitBake 许多用于元数据和配方文件的配置变量。对于此示例，你需要在项目目录中创建该文件并定义一些关键的 BitBake 变量。有关该 \code{bitbake.conf} 文件的更多信息，请参阅 \url{https://git.openembedded.org/bitbake/tree/conf/bitbake.conf}。
+
+\medskip
+Use the following commands to create the \code{conf} directory in the project directory:
+
+\medskip
+使用以下命令在项目目录中创建 \code{conf} 目录：
+
+\medskip
+\begin{pyglist}
+$ mkdir conf
+\end{pyglist}
+
+\medskip
+From within the \code{conf} directory, use some editor to create the \code{bitbake.conf} so that it contains the following:
+
+\medskip
+在 \code{conf} 目录中，使用一些编辑器来创建 \code{bitbake.conf} 使其包含以下内容：
+
+\medskip
+\begin{pyglist}
+PN  = "${@bb.parse.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
+
+TMPDIR  = "${TOPDIR}/tmp"
+CACHE   = "${TMPDIR}/cache"
+STAMP   = "${TMPDIR}/${PN}/stamps"
+T       = "${TMPDIR}/${PN}/work"
+B       = "${TMPDIR}/${PN}"
+\end{pyglist}
+
+\medskip
+\begin{noteblock}{Note}%
+Without a value for \bbgls{PN}, the variables \bbgls{STAMP}, \bbgls{T}, and \bbgls{B}, prevent more than one recipe from working. You can fix this by either setting \bbgls{PN} to have a value similar to what OpenEmbedded and BitBake use in the default \code{bitbake.conf} file (see previous example). Or, by manually updating each recipe to set \bbgls{PN}. You will also need to include \bbgls{PN} as part of the \bbgls{STAMP}, \bbgls{T}, and \bbgls{B} variable definitions in the \code{local.conf} file.
+
+\medskip
+如果没有 \bbgls{PN} 的值，变量 \bbgls{STAMP}、\bbgls{T} 和 \bbgls{B} 会阻止多个配方工作。你可以通过将 \bbgls{PN} 设置为与 OpenEmbedded 和 BitBake 在默认文件 \code{bitbake.conf} 中使用的值类似的值来解决此问题（参见前面的示例）。或者，通过手动更新每个配方来设置 \bbgls{PN} 的值。你还需要将 \bbgls{PN}，\bbgls{STAMP}，\bbgls{T} 和 \bbgls{B} 变量都定义在 \code{local.conf} 文件中。
+\end{noteblock}
+
+\medskip
+The \code{TMPDIR} variable establishes a directory that BitBake uses for build output and intermediate files other than the cached information used by the \bbsection{Setscene} process. Here, the \code{TMPDIR} directory is set to \code{hello/tmp}.
+
+\medskip
+\code{TPMDIR}变量设置了一个目录，BitBake 用此来保存构建过程中的输出和中间文件（ \bbsection{Setscene} 进程中所使用的缓存信息除外）。在此例中，该目录被设置为 \code{hello/tmp}
+
+\medskip
+\begin{noteblock}{Tip}%
+You can always safely delete the tmp directory in order to rebuild a BitBake target. The build process creates the directory for you when you run BitBake.
+
+\medskip
+你可以随时安全地删除 \code{tmp} 目录以重建 BitBake 的构建目标。在运行 BitBake 时，构建过程会自动的创建此目录。
+\end{noteblock}
+
+\medskip
+For information about each of the other variables defined in this example, check \bbgls{PN}, \bbgls{TOPDIR}, \bbgls{CACHE}, \bbgls{STAMP}, \bbgls{T} or \bbgls{B} to take you to the definitions in the glossary.
+
+\medskip
+有关本示例中定义的其他每个变量的信息，请查阅 \bbgls{PN}、\bbgls{TOPDIR}、\bbgls{CACHE}、\bbgls{STAMP}、 \bbgls{T} 或 \bbgls{B} 在词汇表中的定义。
+
+\item \textbf{Run BitBake:} After making sure that the \code{conf/bitbake.conf} file exists, you can run the bitbake command again:
+
+\medskip
+\textbf{运行 BitBake:} 在确认 \code{conf/bitbake.conf} 文件存在后，可以再次运行该 \code{bitbake}命令：
+
+\medskip
+\begin{pyglist}
+$ bitbake
+ERROR: Unable to parse /home/scott-lenovo/bitbake/lib/bb/parse/parse_py/BBHandler.py
+Traceback (most recent call last):
+File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/BBHandler.py", line 67, in inherit(files=['base'], fn='configuration INHERITs', lineno=0, d=<bb.data_smart.DataSmart object at 0x7fab6815edf0>):
+      if not os.path.exists(file):
+>            raise ParseError("Could not inherit file %s" % (file), fn, lineno)
+
+bb.parse.ParseError: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
+\end{pyglist}
+
+\medskip
+In the sample output, BitBake could not find the \code{classes/base.bbclass} file. You need to create that file next.
+
+\medskip
+在示例输出中，BitBake 找不到 \code{classes/base.bbclass} 文件。接下来你将需要创建该文件。
+
+\item \textbf{Creating classes/base.bbclass:} BitBake uses class files to provide common code and functionality. The minimally required class for BitBake is the \code{classes/base.bbclass} file. The \code{base} class is implicitly inherited by every recipe. BitBake looks for the class in the \code{classes} directory of the project (i.e \code{hello/classes} in this example).
+
+\medskip
+\textbf{创建 classes/base.bbclass:} BitBake 使用类文件来提供一些通用代码和功能。BitBake 所需的最低限度的类是文件 \code{classes/base.bbclass}。每个配方都会隐式继承该 \code{base} 类。BitBake 在项目的 \code{classes} 目录（本例中的 \code{hello/classes}）中查找该类文件。
+
+\medskip
+Create the \code{classes} directory as follows:
+
+\medskip
+创建 \code{classes} 目录如下：
+
+\medskip
+\begin{pyglist}
+$ cd $HOME/hello
+$ mkdir classes
+\end{pyglist}
+
+\medskip
+Move to the \code{classes} directory and then create the \code{base.bbclass} file by inserting this single line:
+
+\medskip
+移动到 \code{classes} 目录，然后通过插入以下一行的代码来创建文件 \code{base.bbclass}：
+
+\medskip
+\begin{pyglist}
+addtask build
+\end{pyglist}
+
+\medskip
+The minimal task that BitBake runs is the \code{do_build} task. This is all the example needs in order to build the project. Of course, the \code{base.bbclass} can have much more depending on which build environments BitBake is supporting.
+
+\medskip
+BitBake 能够运行的最小任务是 \code{do_build} 任务。这是本示例构建项目所需的全部内容。当然，\code{base.bbclass} 根据 BitBake 所支持的构建环境的要求，可以添加更多的任务。
+
+\item \textbf{Run BitBake:} After making sure that the \code{classes/base.bbclass} file exists, you can run the bitbake command again:
+
+\medskip
+\textbf{运行 BitBake:} 在确保 \code{classes/base.bbclass} 文件存在后，可以再次运行该 \code{bitbake} 命令：
+\begin{pyglist}
+$ bitbake
+Nothing to do. Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.
+\end{pyglist}
+
+\medskip
+BitBake is finally reporting no errors. However, you can see that it really does not have anything to do. You need to create a recipe that gives BitBake something to do.
+
+\medskip
+BitBake 最终没有报告任何错误。但是，你可以看到它确实没有做任何事。你需要创建一个配方，让 BitBake 有事可做。
+
+\item \textbf{Creating a Layer:} While it is not really necessary for such a small example, it is good practice to create a layer in which to keep your code separate from the general metadata used by BitBake. Thus, this example creates and uses a layer called “mylayer”.
+
+\medskip
+\textbf{创建一个层:} 虽然对于这么小的示例来说，这并非必需，但是最好还是创建一个层，以便将其代码与 BitBake 使用的一般元数据分开。因此，此示例创建并使用了一个名为 ``mylayer'' 的层。
+
+\medskip
+\begin{noteblock}{Note}%
+You can find additional information on layers in the “\bbsection{Layers}” section.
+
+\medskip
+你可以在 “\bbsection{Layers}” 部分找到有关层的更多信息。
+\end{noteblock}
+
+\medskip
+Minimally, you need a recipe file and a layer configuration file in your layer. The configuration file needs to be in the conf directory inside the layer. Use these commands to set up the layer and the conf directory:
+
+\medskip
+你最少需要一个配方文件和一个层配置文件。配置文件需要位于层内的 \code{conf} 目录中。使用这些命令来设置层和 \code{conf}目录：
+
+\medskip
+\begin{pyglist}
+$ cd $HOME/hello
+$ mkdir mylayer
+$ cd mylayer
+$ mkdir conf
+\end{pyglist}
+
+\medskip
+Move to the conf directory and create a \code{layer.conf} file that has the following:
+
+\medskip
+移动到 \code{conf} 目录并创建包含以下内容的文件 \code{layer.conf}：
+
+\medskip
+\begin{pyglist}
+BBPATH .= ":${LAYERDIR}"
+BBFILES += "${LAYERDIR}/*.bb"
+BBFILE_COLLECTIONS += "mylayer"
+BBFILE_PATTERN_mylayer := "^${LAYERDIR_RE}/"
+LAYERSERIES_CORENAMES = "hello_world_example"
+LAYERSERIES_COMPAT_mylayer = "hello_world_example"
+\end{pyglist}
+
+\medskip
+For information on these variables, click on \bbgls{BBFILES}, \bbgls{LAYERDIR}, \bbgls{BBFILE_COLLECTIONS}, \bbgls{BBFILE_PATTERN}\code{_mylayer} or \bbgls{LAYERSERIES_COMPAT} to go to the definitions in the glossary.
+
+\medskip
+有关这些变量的信息，请参阅 \bbgls{BBFILES}, \bbgls{LAYERDIR}, \bbgls{BBFILE_COLLECTIONS}, \bbgls{BBFILE_PATTERN}\code{_mylayer} 或者 \bbgls{LAYERSERIES_COMPAT} 在词汇表中的定义。
+
+\medskip
+\begin{noteblock}{Note}
+We are setting both \code{LAYERSERIES_CORENAMES} and \bbgls{LAYERSERIES_COMPAT} in this particular case, because we are using bitbake without OpenEmbedded. You should usually just use \bbgls{LAYERSERIES_COMPAT} to specify the OE-Core versions for which your layer is compatible, and add the meta-openembedded layer to your project.
+
+\medskip
+在这个示例特定情况下，我们同时设置了 \code{LAYERSERIES_CORENAMES} 和 \bbgls{LAYERSERIES_COMPAT} 两个变量，这是因为我们使用的是没有 OpenEmbedded 的 bitbake 版本。通常情况下，你应该只使用 \bbgls{LAYERSERIES_COMPAT} 变量来指定你自己的层所兼容的 OE-Core 版本，并且需要将 meta-openembedded 层添加到你的项目中。
+\end{noteblock}
+
+\medskip
+You need to create the recipe file next. Inside your layer at the top-level, use an editor and create a recipe file named \code{printhello.bb} that has the following:
+
+\medskip
+接下来，你需要创建配方文件。在 \code{mylayer} 层目录内，使用编辑器创建一个名为 \code{printhello.bb} 的配方文件，其中包含以下内容：
+
+\medskip
+\begin{pyglist}
+DESCRIPTION = "Prints Hello World"
+PN = 'printhello'
+PV = '1'
+
+python do_build() {
+   bb.plain("********************");
+   bb.plain("*                  *");
+   bb.plain("*  Hello, World!   *");
+   bb.plain("*                  *");
+   bb.plain("********************");
+}
+\end{pyglist}
+
+\medskip
+The recipe file simply provides a description of the recipe, the name, version, and the \code{do_build} task, which prints out “Hello World” to the console. For more information on \bbgls{DESCRIPTION}, \bbgls{PN} or \bbgls{PV} follow the links to the glossary.
+
+\medskip
+此配方文件仅仅提供了配方的描述、名称、版本和任务 \code{do_build}，此任务会将 ``Hello World'' 打印到电脑的终端上。有关 \bbgls{DESCRIPTION}, \bbgls{PN} 或者 \bbgls{PV} 的更多信息，请点击词汇表链接。
+
+\item \textbf{Run BitBake With a Target:} Now that a BitBake target exists, run the command and provide that target:
+
+\medskip
+\textbf{运行 Bitmake 来构建目标:} 现在 BitBake 的目标已经存在了，运行下面的命令来构建目标:
+
+\medskip
+\begin{pyglist}
+$ cd $HOME/hello
+$ bitbake printhello
+ERROR: no recipe files to build, check your BBPATH and BBFILES?
+
+Summary: There was 1 ERROR message shown, returning a non-zero exit code.
+\end{pyglist}
+
+\medskip
+We have created the layer with the recipe and the layer configuration file but it still seems that BitBake cannot find the recipe. BitBake needs a \code{conf/bblayers.conf} that lists the layers for the project. Without this file, BitBake cannot find the recipe.
+
+\medskip
+我们已经使用配方和层配置文件创建了层，但 BitBake 似乎仍然找不到配方。BitBake 需要一个 \code{conf/bblayers.conf} 文件来列出项目的层。没有这个文件，BitBake 就找不到配方。
+
+\item \textbf{Creating conf/bblayers.conf:} BitBake uses the \code{conf/bblayers.conf} file to locate layers needed for the project. This file must reside in the \code{conf} directory of the project (i.e. \code{hello/conf} for this example).
+
+\medskip
+\textbf{创建 conf/bblayers.conf:} BitBake 使用 \code{conf/bblayers.conf} 来定位项目所需要的层. 这个文件必须位于项目的 \code{conf} 目录中 (比如本例子中的 \code{hello/conf}).
+
+\medskip
+Set your working directory to the \code{hello/conf} directory and then create the \code{bblayers.conf} file so that it contains the following:
+
+\medskip
+将你的工作目录设置为 \code{hello/conf} 目录，然后创建 \code{bblayers.conf} 文件，使其包含以下内容：
+
+\medskip
+\begin{pyglist}
+BBLAYERS ?= " \
+    /home/<you>/mylayer \
+"
+\end{pyglist}
+
+\medskip
+You need to provide your own information for \code{you} in the file.
+
+\medskip
+你需要在文件中提供你自己 \code{<you>}的信息。
+
+\item \textbf{Run BitBake With a Target:} Now that you have supplied the \code{bblayers.conf} file, run the bitbake command and provide the target:
+
+\medskip
+\textbf{运行 Bitmake 来构建目标:} 现在你已经提供了 \code{bblayers.conf} 文件，运行 \code{bitbake} 命令来构建目标：
+
+\medskip
+\begin{pyglist}
+$ bitbake printhello
+Loading cache: 100% |
+Loaded 0 entries from dependency cache.
+Parsing recipes: 100% |##################################################################################|
+Parsing of 1 .bb files complete (0 cached, 1 parsed). 1 targets, 0 skipped, 0 masked, 0 errors.
+NOTE: Resolving any missing task queue dependencies
+Initialising tasks: 100% |###############################################################################|
+NOTE: No setscene tasks
+NOTE: Executing Tasks
+********************
+*                  *
+*  Hello, World!   *
+*                  *
+********************
+NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.
+\end{pyglist}
+
+\medskip
+\begin{noteblock}{Note}%
+After the first execution, re-running \code{bitbake printhello} again will not result in a BitBake run that prints the same console output. The reason for this is that the first time the \code{printhello.bb} recipe’s \code{do_build} task executes successfully, BitBake writes a stamp file for the task. Thus, the next time you attempt to run the task using that same bitbake command, BitBake notices the stamp and therefore determines that the task does not need to be re-run. If you delete the \code{tmp} directory or run \code{bitbake -c clean printhello} and then re-run the build, the “Hello, World!” message will be printed again.
+
+\medskip
+第一次执行后，再次重新运行 \code{bitbake printhello} 将不会让 BitBake 运行打印相同的输出。原因是，第一次成功执行 \code{printhello.bb} 配方的 \code{do_build} 任务时，BitBake 会为该任务写入一个标记文件。因此，下次当你尝试使用相同的 \code{bitbake} 命令运行该任务时，BitBake 会注意到该标记，因此确定不需要重新运行该任务。如果你删除 \code{tmp} 目录或运行 \code{bitbake -c clean printhello} 命令，然后再重新运行此构建，则 BitBake 会再次打印“Hello, World!”消息。
+\end{noteblock}
+\end{enumerate}

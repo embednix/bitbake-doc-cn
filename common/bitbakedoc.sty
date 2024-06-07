@@ -1,0 +1,57 @@
+\usepackage{imakeidx}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable,listings,breakable,minted}
+\usepackage{xurl}
+\usepackage[absolute,verbose,overlay]{textpos}
+\usepackage{fancyvrb,xcolor}
+\usepackage{graphicx} % For including images
+\usepackage{tabularx} % For flexible table width
+\usepackage{environ}
+\usepackage{setspace}
+\usepackage{etoolbox}
+\usepackage{makecell}
+\usepackage{upquote}
+\usepackage{ifthen}
+\usepackage{fancyhdr}
+\usepackage{titlepic}
+\usepackage[toc,style=altlisthypergroup,nonumberlist]{glossaries}
+\usepackage{color}
+\usepackage{verbments}
+\usepackage{enumitem}
+\usepackage{verbatim}
+\usepackage{tablefootnote}
+\usepackage{longtable}
+
+% color used in bitbake doc
+\definecolor{sectionblue}{HTML}{00557D}
+\definecolor{notebggreay}{HTML}{F0F0F2}
+\definecolor{codebggreay}{HTML}{F8F8F8}
+
+\definecolor{blcode}{rgb}{0.35,0.35,0.35}
+\definecolor{bldarkblue}{rgb}{0.25,0.25,0.75}
+
+\newcommand{\codecolor}{\color{blcode}}
+\newcommand{\code}[1]{{\codecolor \path{#1}}}
+
+\newcommand\bbgls[1]{\underline{\gls{#1}}}
+
+\newtcolorbox{noteblock}[1]{colback=notebggreay,colframe=notebggreay,fonttitle=\bfseries,arc=0mm,title={\large\color{sectionblue} \textbf{#1}}}
+\newtcolorbox{codeblock}{colback=codebggreay,colframe=codebggreay,arc=0mm,left=0mm}
+\newcommand{\bbnote}[1]{\bigskip\begin{noteblock}{Note}{#1}\end{noteblock}}
+
+%% used for titles with Chinese and English
+\newcommand{\bbsection}[1]{\hyperref[section:#1]{#1}}
+\newcommand{\bbsections}[2]{\hyperref[section:#1]{#2}}
+\newcommand{\bbchapter}[1]{\hyperref[chapter:#1]{#1}}
+\newcommand{\bbchapters}[2]{\hyperref[chapter:#1]{#2}}
+\newcommand{\newpart}[2]{\part[#1 -\/- #2]{#1\\#2}}
+\newcommand{\newchapter}[2]{\chapter[#1 -\/- #2]{#1\\#2}}
+\newcommand{\newsection}[2]{\section[#1 -\/- #2]{#1\\#2}}
+\newcommand{\newsubsection}[2]{\subsection[#1 -\/- #2]{#1\\#2}}
+\newcommand{\newsubsubsection}[2]{\subsubsection[#1 -\/- #2]{#1\\#2}}
+
+\newcommand{\glsentry}[3]{\longnewglossaryentry{#1}{name={#2}}{#3}}
+
+% pyglist options
+\plset{fontsize=\footnotesize,bgcolor=codebggreay}
