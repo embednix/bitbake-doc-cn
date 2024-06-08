@@ -7,7 +7,7 @@
 #
 # Run the container
 #
-# sudo docker run -it -u $(id -u):$(id -g) -v $(pwd):/workdir --rm bitbake-doc-cn make clean && make
+# sudo docker run -it -u $(id -u):$(id -g) -v $(pwd):/workdir --rm bitbake-doc-cn make
 #
 
 
