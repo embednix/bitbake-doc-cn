@@ -37,7 +37,7 @@ Refer to `utils/docker/Dockerfile` for details
 bitbake-doc-cn$ docker build -t bitbake-doc-cn utils/docker
 ```
 ```
-bitbake-doc-cn$ docker run -it -u $(id -u):$(id -g) -v $(pwd):/bitbake-doc-cn --rm bitbake-doc-cn make clean && make
+bitbake-doc-cn$ docker run -it -u $(id -u):$(id -g) -v $(pwd):/bitbake-doc-cn --rm bitbake-doc-cn make
 ```
 if you see errors like this:
 ```
@@ -45,7 +45,7 @@ groups: cannot find name for group ID 1000", try following command
 ```
 run this command to retry:
 ```
-docker run -it -u $(id -u):$(id -g) -v $(pwd):/bitbake-doc-cn -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro --rm bitbake-doc-cn make clean && make
+docker run -it -u $(id -u):$(id -g) -v $(pwd):/bitbake-doc-cn -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro --rm bitbake-doc-cn make
 ```
 
 
