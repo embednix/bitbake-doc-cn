@@ -3,7 +3,7 @@
 1. install the packages needed to compile the materials (example on Ubuntu 22.04):
 
 ```
-sudo apt install make git inkscape texlive-latex-base \
+sudo apt install make git texlive-latex-base \
 texlive-latex-extra texlive-font-utils dia \
 python3-pygments texlive-fonts-recommended \
 texlive-fonts-extra texlive-xetex texlive-extra-utils \
