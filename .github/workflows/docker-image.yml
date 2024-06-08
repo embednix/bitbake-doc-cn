@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build -t bitbake-doc-cn utils/docker
+      run: sudo docker build -t bitbake-doc-cn utils/docker
 
     - name: run_docker
-      run: docker run -u $(id -u):$(id -g) -v $(pwd):/workdir --rm bitbake-doc-cn make clean && make
+      run: sudo docker run -u $(id -u):$(id -g) -v $(pwd):/workdir --rm bitbake-doc-cn make clean && make
