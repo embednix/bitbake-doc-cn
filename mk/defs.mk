@@ -1,3 +1,7 @@
+#define current bitbake version
+BITBAKE_VER_STR = v2.8.0
+BITBAKE_VER_NUM = 2.8
+
 # common commands
 PDFLATEX = xelatex
 MKGLOSSARY = makeglossaries

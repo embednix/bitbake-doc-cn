@@ -10,11 +10,15 @@ $(foreach file,$(BITBAKE_DOC_CN_PAGES),$(if $(wildcard contents/$(file)),,$(erro
 ALL_PAGES_TEX      = $(foreach s,$(BITBAKE_DOC_CN_PAGES),$(wildcard contents/$(s)))
 
 BITBAKEDOC_STY = common/bitbakedoc.sty
-bitbake-doc-cn.pdf: $(BITBAKEDOC_STY) $(ALL_PAGES_TEX) $(OUTDIR)/last-update.tex
+AUTO_GEN_TEX = $(OUTDIR)/last-update.tex $(OUTDIR)/bitbake-version.tex
+bitbake-doc-cn.pdf: $(BITBAKEDOC_STY) $(ALL_PAGES_TEX) $(AUTO_GEN_TEX)
 	@mkdir -p $(OUTDIR)
 	rm -f $(OUTDIR)/$(basename $@).tex
-	echo "\input{last-update}" >> $(OUTDIR)/$(basename $@).tex
-	for f in $(filter-out $(OUTDIR)/last-update.tex, $(filter %.tex,$^)) ; do \
+	for f in $(basename $(notdir $(AUTO_GEN_TEX))); do \
+		echo "\input{$$f}" >> $(OUTDIR)/$(basename $@).tex ; \
+	done
+
+	for f in $(filter-out $(AUTO_GEN_TEX), $(filter %.tex,$^)) ; do \
 		echo -n "\input{../"          >> $(OUTDIR)/$(basename $@).tex ; \
 		echo -n $$f | sed 's%\.tex%%' >> $(OUTDIR)/$(basename $@).tex ; \
 		echo "}"                      >> $(OUTDIR)/$(basename $@).tex ; \
@@ -22,11 +26,15 @@ bitbake-doc-cn.pdf: $(BITBAKEDOC_STY) $(ALL_PAGES_TEX) $(OUTDIR)/last-update.tex
 	(cd $(OUTDIR); $(PDFLATEX_ENV) $(PDFLATEX) $(PDFLATEX_OPT) $(basename $@).tex)
 	(cd $(OUTDIR); $(MKGLOSSARY) $(basename $@))
 	(cd $(OUTDIR); $(PDFLATEX_ENV) $(PDFLATEX) $(PDFLATEX_OPT) $(basename $@).tex > /dev/null 2>&1)
-	cat out/$@ > $@
+	cat out/$@ > $(basename $@)-$(BITBAKE_VER_STR).pdf
 
 $(OUTDIR)/last-update.tex:
 	mkdir -p $(@D)
 	t=`git log -1 --format=%ct` && printf "\def \lastupdateen{%s}\n" "`(LANG=en_EN.UTF-8 date -d @$${t} +'%Y/%m/%d')`" > $@
+
+$(OUTDIR)/bitbake-version.tex:
+	mkdir -p $(@D)
+	printf "\def \\\bbversion{$(BITBAKE_VER_NUM)}\n" > $@
 
 .PRECIOUS: $(OUTDIR)/%.png
 $(OUTDIR)/%.png: %.png
