@@ -12,7 +12,9 @@ The current fetch module is called ``fetch2'' and refers to the fact that it is 
 
 BitBake takes several steps when fetching source code or files. The fetcher codebase deals with two distinct processes in order: obtaining the files from somewhere (cached or otherwise) and then unpacking those files into a specific location and perhaps in a specific way. Getting and unpacking the files is often optionally followed by patching. Patching, however, is not covered by this module.
 
-BitBake 在获取源代码或文件时需要几个步骤。Fetcher 代码仓库按照顺序处理两个不同的过程：从某个地方（缓存或其他方式）获取文件，然后将这些文件解压（可能以特定方式解压）到特定位置。获取和解压文件后通常可以选择进行修补。但是本章节不涵盖修补方面的话题。
+BitBake 在获取源代码或文件时需要几个步骤。源文件获取工具\footnotemark[1]（fetcher）的代码会按照顺序来处理两个不同的过程：从某个地方（缓存或其他方式）获取文件，然后将这些文件解压（可能以特定方式解压）到特定位置。获取和解压文件后通常可以选择进行修补。但是本章节不涵盖修补方面的话题。
+
+\footnotetext[1]{以下简称 ``fetcher'' 为 ``获取工具''}
 
 The code to execute the first part of this process, a fetch, looks something like the following:
 
@@ -51,7 +53,7 @@ For convenience, the naming in these examples matches the variables used by Open
 
 The \bbgls{SRC_URI} and \code{WORKDIR} variables are not hardcoded into the fetcher, since those fetcher methods can be (and are) called with different variable names. In OpenEmbedded for example, the shared state (sstate) code uses the fetch module to fetch the sstate files.
 
-\bbgls{SRC_URI} 变量和 \code{WORKDIR} 变量都没有在 fetcher 中被设为一个固定值，因为这些 fether 类的成员函数可以（并且确实）使用不同的变量名调用。例如，在 OpenEmbedded 中，共享状态 (sstate) 代码使用提取模块来提取 sstate 文件。
+\bbgls{SRC_URI} 变量和 \code{WORKDIR} 变量都没有在获取工具（fetcher）中被设为一个固定值，因为这些 fether 类的成员函数可以（并且确实）使用不同的变量名调用。例如，在 OpenEmbedded 中，共享状态 (sstate) 代码使用提取模块来提取 sstate 文件。
 
 When the \code{download()} method is called, BitBake tries to resolve the URLs by looking for source files in a specific search order:
 
@@ -71,7 +73,7 @@ When the \code{download()} method is called, BitBake tries to resolve the URLs b
 
 For each URL passed to the fetcher, the fetcher calls the submodule that handles that particular URL type. This behavior can be the source of some confusion when you are providing URLs for the \bbgls{SRC_URI} variable. Consider the following two URLs:
 
-对于传递给 fetcher 的每个 URL，fetcher 都会调用处理该特定 URL 类型的子模块来对此 URL 进行处理。当你为 \bbgls{SRC_URI} 变量提供 URL 时，此行为可能会造成一些混淆。请考虑以下两个 URL：
+对于传递给获取工具（fetcher）的每个 URL，获取工具（fetcher）都会调用处理该特定 URL 类型的子模块来对此 URL 进行处理。当你为 \bbgls{SRC_URI} 变量提供 URL 时，此行为可能会造成一些混淆。请考虑以下两个 URL：
 
 \begin{pyglist}
 https://git.yoctoproject.org/git/poky;protocol=git
@@ -80,7 +82,7 @@ git://git.yoctoproject.org/git/poky;protocol=http
 
 In the former case, the URL is passed to the \code{wget} fetcher, which does not understand ``git''. Therefore, the latter case is the correct form since the Git fetcher does know how to use HTTP as a transport.
 
-在前一种情况下，URL 被传递给无法理解 ``git'' 协议的 \code{wget} 抓取器。因此后一种情况是正确形式的 URL，因为 Git 抓取器知道如何使用 HTTP 作为传输方式。
+在前一种情况下，URL 被传递给无法理解 ``git'' 协议的 \code{wget} 获取工具（fetcher）。因此后一种情况是正确形式的 URL，因为 Git 的获取工具（fetcher）知道如何使用 HTTP 作为传输方式。
 
 Here are some examples that show commonly used mirror definitions:
 
@@ -112,7 +114,7 @@ Since network accesses are slow, BitBake maintains a cache of files downloaded f
 
 File integrity is of key importance for reproducing builds. For non-local archive downloads, the fetcher code can verify SHA-256 and MD5 checksums to ensure the archives have been downloaded correctly. You can specify these checksums by using the \bbgls{SRC_URI} variable with the appropriate varflags as follows:
 
-文件完整性对于重现构建至关重要。对于非本地存档下载，fetcher 的代码可以验证文件的 SHA-256 和 MD5 校验和，以确保存档已正确下载。你可以使用 \bbgls{SRC_URI} 变量和合适的变量标志来指定这些校验和，如下所示：
+文件的完整性对于重现构建是至关重要的。对于非本地存档下载，获取工具（fetcher）的代码可以验证文件的 SHA-256 和 MD5 校验和，以确保存档已正确下载。你可以使用 \bbgls{SRC_URI} 变量和合适的变量标志来指定这些校验和，如下所示：
 
 \begin{pyglist}
 SRC_URI[md5sum] = "value"
@@ -197,13 +199,13 @@ The unpack call automatically decompresses and extracts files with ``.Z'', ``.z'
 
 As mentioned, the Git fetcher has its own unpack method that is optimized to work with Git trees. Basically, this method works by cloning the tree into the final directory. The process is completed using references so that there is only one central copy of the Git metadata needed.
 
-如上所述，Git fetcher 有自己的解包方法，并且该方法针对 Git 树进行了优化。基本上，此方法通过将源代码树克隆到最终目录中来工作的。该过程是使用引用的方式来完成的，因此它只需要一个 Git 元数据的副本拷贝即可。
+如上所述，Git 的获取工具（fetcher）有自己的解包方法，并且该方法针对 Git 树进行了优化。基本上，此方法通过将源代码树克隆到最终目录中来工作的。该过程是使用引用的方式来完成的，因此它只需要一个 Git 元数据的副本拷贝即可。
 
-\section{Fetchers}
+\newsection{Fetchers}{源文件获取工具}
 
 As mentioned earlier, the URL prefix determines which fetcher submodule BitBake uses. Each submodule can support different URL parameters, which are described in the following sections.
 
-前面提到过，URL 的前缀决定了 BitBake 使用哪个 fetcher 子模块。每个子模块可以支持不同的 URL 参数，这些参数将在以下部分中介绍。
+前面提到过，URL 的前缀决定了 BitBake 使用哪个获取工具（fetcher）子模块。每个子模块可以支持不同的 URL 参数，这些参数将在以下部分中介绍。
 
 \subsection{Local file fetcher (\texttt{file://})}
 
@@ -228,12 +230,12 @@ SRC_URI = "file:///Users/ich/very_important_software"
 
 This fetcher obtains files from web and FTP servers. Internally, the fetcher uses the wget utility.
 
-此 fetcher 用来从 Web 和 FTP 服务器获取文件。在其内部，fetcher 是使用 wget 程序来完成下载工作的。
+此获取工具（fetcher）用来从 Web 和 FTP 服务器获取文件。在其内部，获取工具（fetcher）是使用 wget 程序来完成下载工作的。
 
 
 The executable and parameters used are specified by the \code{FETCHCMD_wget} variable, which defaults to sensible values. The fetcher supports a parameter ``downloadfilename'' that allows the name of the downloaded file to be specified. Specifying the name of the downloaded file is useful for avoiding collisions in \bbgls{DL_DIR} when dealing with multiple files that have the same name.
 
-使用的可执行文件和参数由变量 \code{FETCHCMD_wget} 来指定的，其默认值被设置为一个合理的值。fetcher 支持使用参数 ``downloadfilename'' 来指定下载文件的名称。 在处理多个同名文件时，指定下载文件的名称有助于避免在下载目录 \bbgls{DL_DIR} 中发生冲突。
+获取工具（fetcher）所使用的可执行文件和参数由变量 \code{FETCHCMD_wget} 来指定的，其默认值被设置为一个合理的值。fetcher 支持使用参数 ``downloadfilename'' 来指定下载文件的名称。在处理多个同名文件时，指定下载文件的名称有助于避免在下载目录 \bbgls{DL_DIR} 中发生冲突。
 
 If a username and password are specified in the \bbgls{SRC_URI}, a Basic Authorization header will be added to each request, including across redirects. To instead limit the Authorization header to the first request, add ``redirectauth=0'' to the list of parameters.
 
@@ -321,7 +323,7 @@ This submodule handles checking out files from the CVS version control system. Y
 
 As well as the standard username and password URL syntax, you can also configure the fetcher with various URL parameters:
 
-除了标准的用户名和密码 URL 语法之外，你还可以使用其他各种 URL 参数配置 fetcher：
+除了标准的用户名和密码 URL 语法之外，你还可以使用其他各种 URL 参数来配置获取工具（fetcher）：
 
 The supported parameters are as follows:
 
@@ -362,7 +364,7 @@ The supported parameters are as follows:
 \item \textbf{``scmdata'':} Causes the CVS metadata to be maintained in the tarball the fetcher creates when set to ``keep''. The tarball is expanded into the work directory. By default, the CVS metadata is removed.
 
 \medskip
-\textbf{``scmdata'':} 设置为“keep”时，会导致 CVS 元数据保留在 fetcher 创建的 tarball 文件中。tarball 文件会被展开到工作目录中。默认情况下，CVS 的元数据会被删除掉。
+\textbf{``scmdata'':} 设置为“keep”时，会导致 CVS 元数据保留在其获取工具（fetcher）所创建的 tarball 文件中。tarball 文件会被展开到工作目录中。默认情况下，CVS 的元数据会被删除掉。
 
 \item \textbf{``fullpath'':} Controls whether the resulting checkout is at the module level, which is the default, or is at deeper paths.
 
@@ -372,7 +374,7 @@ The supported parameters are as follows:
 \item \textbf{``norecurse'':} Causes the fetcher to only checkout the specified directory with no recurse into any subdirectories.
 
 \medskip
-\textbf{``norecurse'':} 告诉 fetcher 仅检出指定目录的源代码，而不会对此目录的任何子目录进行递归检出。
+\textbf{``norecurse'':} 告诉获取工具（fetcher）仅检出指定目录的源代码，而不会对此目录的任何子目录进行递归检出。
 
 \item \textbf{``port'':} The port to which the CVS server connects.
 
@@ -394,7 +396,7 @@ SRC_URI = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
 
 This fetcher submodule fetches code from the Subversion source control system. The executable used is specified by \code{FETCHCMD_svn}, which defaults to ``svn''. The fetcher's temporary working directory is set by \bbgls{SVNDIR}, which is usually \code{DL_DIR/svn}.
 
-此 fetcher 子模块从 Subversion 源代码控制系统提取代码。使用的可执行文件由 \code{FETCHCMD_svn} 变量指定，默认为 ``svn''。fetcher 的临时工作目录由 \bbgls{SVNDIR} 变量来设置 ，通常为 \code{DL_DIR/svn}。
+此获取工具（fetcher）子模块从 Subversion 源代码控制系统提取代码。使用的可执行文件由 \code{FETCHCMD_svn} 变量指定，默认为 ``svn''。fetcher 的临时工作目录由 \bbgls{SVNDIR} 变量来设置 ，通常为 \code{DL_DIR/svn}。
 
 The supported parameters are as follows:
 \begin{itemize}
@@ -455,11 +457,11 @@ SRC_URI = "svn://myrepos/proj1;module=trunk;protocol=http;path_spec=${MY_DIR}/pr
 
 This fetcher submodule fetches code from the Git source control system. The fetcher works by creating a bare clone of the remote into \bbgls{GITDIR}, which is usually \code{DL_DIR/git2}. This bare clone is then cloned into the work directory during the unpack stage when a specific tree is checked out. This is done using alternates and by reference to minimize the amount of duplicate data on the disk and make the unpack process fast. The executable used can be set with \code{FETCHCMD_git}.
 
-此 fetcher 子模块从 Git 源代码控制系统提取代码。fetcher 的工作方式是将远程代码仓库克隆到 \bbgls{GITDIR} 中，通常是 \code{DL_DIR/git2}。然后在解包阶段，当检出特定代码树时，将此代码树克隆到工作目录中去。此过程是使用替代项和对代码树的引用来完成的，以最大限度地减少磁盘上的重复数据量并加快解包过程。可以使用 \code{FETCHCMD_git} 来设置要使用的可执行文件。
+此获取工具（fetcher）子模块从 Git 源代码控制系统提取代码。fetcher 的工作方式是将远程代码仓库克隆到 \bbgls{GITDIR} 中，通常是 \code{DL_DIR/git2}。然后在解包阶段，当检出特定代码树时，将此代码树克隆到工作目录中去。此过程是使用替代项和对代码树的引用来完成的，以最大限度地减少磁盘上的重复数据量并加快解包过程。可以使用 \code{FETCHCMD_git} 来设置要使用的可执行文件。
 
 This fetcher supports the following parameters:
 
-该 fetcher 支持以下参数：
+该获取工具（fetcher）支持以下参数：
 
 \begin{itemize}
 \setlength\itemsep{1.0em}
@@ -491,25 +493,25 @@ Note the `:' character changed for a `/' before the path to the project.
 \item \textbf{``nocheckout'':} Tells the fetcher to not checkout source code when unpacking when set to ``1''. Set this option for the URL where there is a custom routine to checkout code. The default is ``0''.
 
 \medskip
-\textbf{``nocheckout'':} 当设置为 ``1'' 时，指示 fetcher 在解压时不用检查源代码。当使用自定义的路径 URL 来检出代码的时候，需要设置此选项。默认值为“0”。
+\textbf{``nocheckout'':} 当设置为 ``1'' 时，指示获取工具（fetcher）在解压时不用检查源代码。当使用自定义的路径 URL 来检出代码的时候，需要设置此选项。默认值为“0”。
 
 \item \textbf{``rebaseable'':} Indicates that the upstream Git repository can be rebased\footnotemark[1]. You should set this parameter to ``1'' if revisions can become detached from branches. In this case, the source mirror tarball is done per revision, which has a loss of efficiency. Rebasing the upstream Git repository could cause the current revision to disappear from the upstream repository. This option reminds the fetcher to preserve the local cache carefully for future use. The default value for this parameter is ``0''.
 
 \medskip
-\textbf{``rebaseable'':} 表示是否上游 Git 代码仓库允许你在另一个代码版本的基础之上重新提交内容\footnotemark[1]。如果修订版本可以与源码的分支分离，则应将此参数设置为“1”。在这种情况下，源镜像的每一个版本都会生成一个 tarball 文件，这会降低效率。但是如果重新以上游 Git 代码仓库为基础对当前内容进行提交的话，可能会导致当前的版本从上游代码仓库中消失。此选项提醒 fetcher 小心保存本地缓存以备将来使用。此参数的默认值为“0”。
+\textbf{``rebaseable'':} 表示是否上游 Git 代码仓库允许你在另一个代码版本的基础之上重新提交内容\footnotemark[1]。如果修订版本可以与源码的分支分离，则应将此参数设置为“1”。在这种情况下，源镜像的每一个版本都会生成一个 tarball 文件，这会降低效率。但是如果重新以上游 Git 代码仓库为基础对当前内容进行提交的话，可能会导致当前的版本从上游代码仓库中消失。此选项提醒获取工具（fetcher）小心保存本地缓存以备将来使用。此参数的默认值为“0”。
 \footnotetext[1]{如果你对 git-rebase 不熟悉的话，请参阅 \url{https://git-scm.com/docs/git-rebase/zh_HANS-CN}}
 
 \item \textbf{``nobranch'':} Tells the fetcher to not check the SHA validation for the branch when set to ``1''. The default is ``0''. Set this option for the recipe that refers to the commit\footnotemark[2] that is valid for any namespace (branch, tag, …) instead of the branch.
 
 \medskip
-\textbf{``nobranch'':} 当设置为 ``1'' 的时间，告诉 fetcher 不要对代码分支的 SHA 进行查验。其默认值为“0”。如果配方中引用了此提交\footnotemark[2]并表明对所有的命名空间（分支、标签等）此提交都是有效的（而不仅仅是分支），则应该对此选项进行设置。
+\textbf{``nobranch'':} 当设置为 ``1'' 的时间，告诉获取工具（fetcher）不要对代码分支的 SHA 进行查验。其默认值为“0”。如果配方中引用了此提交\footnotemark[2]并表明对所有的命名空间（分支、标签等）此提交都是有效的（而不仅仅是分支），则应该对此选项进行设置。
 
 \footnotetext[2]{有关 Git-commit，请参阅 \url{https://git-scm.com/docs/git-commit/zh_HANS-CN}}
 
 \item \textbf{``bareclone'':} Tells the fetcher to clone a bare clone into the destination directory without checking out a working tree. Only the raw Git metadata is provided. This parameter implies the ``nocheckout'' parameter as well.
 
 \medskip
-\textbf{``bareclone'':} 告诉 fetcher 仅仅将代码仓库克隆到目标目录中，而不检出一个工作版本。在这种情况下代码仓库仅仅提供原始的 Git 元数据。此参数也暗示``nocheckout'' 参数被设置成 ``1''。
+\textbf{``bareclone'':} 告诉获取工具（fetcher）仅仅将代码仓库克隆到目标目录中，而无需检出一个工作版本。在这种情况下代码仓库仅仅提供原始的 Git 元数据。此参数也暗示``nocheckout'' 参数被设置成 ``1''。
 
 \item \textbf{``branch'':} The branch(es) of the Git tree to clone. Unless ``nobranch'' is set to ``1'', this is a mandatory parameter. The number of branch parameters must match the number of name parameters.
 
@@ -558,7 +560,7 @@ SRC_URI = "git://git@gitlab.freedesktop.org/mesa/mesa.git;branch=main;protocol=s
 When using git as the fetcher of the main source code of your software, \href{https://docs.yoctoproject.org/ref-manual/variables.html#term-S}{S} should be set accordingly:
 
 \medskip
-当用 git 作为软件主源代码的 fetcher 的时间， 变量 \href{https://docs.yoctoproject.org/ref-manual/variables.html#term-S}{S} 应进行相应的设置：
+当用 git 作为软件主源代码的获取工具（fetcher）的时间， 变量 \href{https://docs.yoctoproject.org/ref-manual/variables.html#term-S}{S} 应进行相应的设置：
 
 
 \begin{pyglist}
@@ -576,13 +578,13 @@ Specifying passwords directly in \code{git://} urls is not supported. There are 
 
 Using tags with the git fetcher may cause surprising behaviour. Bitbake needs to resolve the tag to a specific revision and to do that, it has to connect to and use the upstream repository. This is because the revision the tags point at can change and we've seen cases of this happening in well known public repositories. This can mean many more network connections than expected and recipes may be reparsed at every build. Source mirrors will also be bypassed as the upstream repository is the only source of truth to resolve the revision accurately. For these reasons, whilst the fetcher can support tags, we recommend being specific about revisions in recipes.
 
-用 git fetcher 来检出代码仓库的某个 Git 的标签版本可能会导致某些意外行为。Bitbake 首先需要将此标签解析为某特定版本，为此，它必须连接并使用上游的 Git 代码仓库。这是因为标签指向的版本可能会发生变化。我们在一些众所周知的公共代码仓库中已经看到这种情况发生过。这可能意味着需要的网络连接要比预期的多得多，并且配方文件可能会在每次构建时被重新解析。因为上游代码仓库是能够准确解析版本的唯一真实来源，源镜像站点也将被绕过去忽略不用。出于这些原因，虽然 Git fetcher 可以支持标签，但我们还是建议在配方中具体说明要下载的版本。
+用 git 的获取工具（fetcher）来检出代码仓库的某个 Git 的标签版本可能会导致某些意外行为。Bitbake 首先需要将此标签解析为某特定版本，为此，它必须连接并使用上游的 Git 代码仓库。这是因为标签指向的版本可能会发生变化。我们在一些众所周知的公共代码仓库中已经看到这种情况发生过。这可能意味着需要的网络连接要比预期的多得多，并且配方文件可能会在每次构建时被重新解析。因为上游代码仓库是能够准确解析版本的唯一真实来源，源镜像站点也将被绕过去忽略不用。出于这些原因，虽然 Git 的获取工具（fetcher）可以支持标签，但我们还是建议在配方中具体说明要下载的版本。
 
 \subsection{Git Submodule Fetcher (\texttt{gitsm://})}
 
 This fetcher submodule inherits from the \bbsection{Git fetcher} and extends that fetcher's behavior by fetching a repository's submodules. \bbgls{SRC_URI} is passed to the Git fetcher as described in the \bbsections{Git Fetcher}{Git Fetcher (git://)} section.
 
-此 fetcher 子模块继承自Git fetcher，并通过提取代码仓库的子模块来扩展该 fetcher 的行为。如 \bbsections{Git Fetcher}{Git Fetcher (git://)} 部分所述，\bbgls{SRC_URI} 会被传递给 Git fetcher。
+此获取工具（fetcher）子模块继承自Git fetcher，并通过提取代码仓库的子模块来扩展该获取工具（fetcher）的行为。如 \bbsections{Git Fetcher}{Git Fetcher (git://)} 部分所述，\bbgls{SRC_URI} 会被传递给 Git fetcher。
 
 \medskip
 \begin{noteblock}{Note}%
@@ -596,18 +598,18 @@ You must clean a recipe when switching between `\code{git://}' and `\code{gitsm:
 The Git Submodules fetcher is not a complete fetcher implementation. The fetcher has known issues where it does not use the normal source mirroring infrastructure properly. Further, the submodule sources it fetches are not visible to the licensing and source archiving infrastructures.
 
 \medskip
-Git 子模块 fetcher 并不是一个完整的 fetcher 实现。此 fetcher 存在一些已知的问题，即它不能正确地使用正常的源镜像基础功能。此外，它提取的子模块源对于许可和源归档模块的基础功能不可见。
+Git 的获取工具（fetcher）子模块并不是一个完整的获取工具（fetcher）的实现。此获取工具（fetcher）存在一些已知的问题，即它不能正确地使用正常的源镜像基础功能。此外，它提取的子模块源对于许可和源归档模块的基础功能不可见。
 \end{noteblock}
 
 \subsection{ClearCase Fetcher (\texttt{ccrc://})}
 
 This fetcher submodule fetches code from a \href{http://en.wikipedia.org/wiki/Rational_ClearCase}{ClearCase} repository.
 
-该 fetcher 子模块是用于从 \href{http://en.wikipedia.org/wiki/Rational_ClearCase}{ClearCase} 代码仓库中获取源代码。
+该获取工具（fetcher）子模块是用于从 \href{http://en.wikipedia.org/wiki/Rational_ClearCase}{ClearCase} 代码仓库中获取源代码。
 
 To use this fetcher, make sure your recipe has proper \bbgls{SRC_URI}, \bbgls{SRCREV}, and \bbgls{PV} settings. Here is an example:
 
-要使用此 fetcher，请确保你的配方已经正确把 \bbgls{SRC_URI}、\bbgls{SRCREV} 和 \bbgls{PV} 给设置好了。以下是示例：
+要使用此获取工具（fetcher），请确保你的配方已经正确把 \bbgls{SRC_URI}、\bbgls{SRCREV} 和 \bbgls{PV} 给设置好了。以下是示例：
 
 \begin{pyglist}
 SRC_URI = "ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
@@ -617,7 +619,7 @@ PV = "${@d.getVar("SRCREV", False).replace("/", "+")}"
 
 The fetcher uses the \code{rcleartool} or \code{cleartool} remote client, depending on which one is available.
 
-fetcher 使用 \code{rcleartool} 还是 \code{cleartool} 远程客户端，具体取决于哪一个是当前可用的。
+此获取工具（fetcher）使用 \code{rcleartool} 还是 \code{cleartool} 远程客户端，具体取决于哪一个是当前可用的。
 
 Following are options for the \bbgls{SRC_URI} statement:
 
@@ -649,14 +651,14 @@ load /example_vob/example_module
 
 By default, the fetcher creates a configuration specification. If you want this specification written to an area other than the default, use the \code{CCASE_CUSTOM_CONFIG_SPEC} variable in your recipe to define where the specification is written.
 
-默认情况下，fetcher 会创建一个配置规范。如果你希望将此规范写入默认区域以外的地方，请使用配方中的变量 \code{CCASE_CUSTOM_CONFIG_SPEC} 来定义你所期望的规范的写入位置。
+默认情况下，获取工具（fetcher）会创建一个配置规范。如果你希望将此规范写入默认区域以外的地方，请使用配方中的变量 \code{CCASE_CUSTOM_CONFIG_SPEC} 来定义你所期望的规范的写入位置。
 
 \medskip
 \begin{noteblock}{Note}%
 the \bbgls{SRCREV} loses its functionality if you specify this variable. However, \bbgls{SRCREV} is still used to label the archive after a fetch even though it does not define what is fetched.
 
 \medskip
-如果此变量（\code{CCASE_CUSTOM_CONFIG_SPEC}）被赋予了一个值，则 \bbgls{SRCREV} 变量的值将被忽略。但是，即使 \bbgls{SRCREV} 的值没有被定义为 fetcher 所获取的内容，它仍可用于标记 fetcher 所获得的文件档案。
+如果此变量（\code{CCASE_CUSTOM_CONFIG_SPEC}）被赋予了一个值，则 \bbgls{SRCREV} 变量的值将被忽略。但是，即使 \bbgls{SRCREV} 的值没有被定义为获取工具（fetcher）所获取的内容，它仍可用于标记获取工具（fetcher）所获得的文件档案。
 \end{noteblock}
 
 Here are a couple of other behaviors worth mentioning:
@@ -673,18 +675,18 @@ Here are a couple of other behaviors worth mentioning:
 \item In order to use \code{rcleartool} with authenticated users, an ``rcleartool login'' is necessary before using the fetcher.
 
 \medskip
-为了与经过身份验证的用户一起使用 \code{rcleartool}，在使用 fetcher 之前必须进行 ``rcleartool login''。
+为了与经过身份验证的用户一起使用 \code{rcleartool}，在使用获取工具（fetcher）之前必须进行 ``rcleartool login''。
 \end{itemize}
 
 \subsection{Perforce Fetcher (\texttt{p4://})}
 
 This fetcher submodule fetches code from the \href{https://www.perforce.com/}{Perforce} source control system. The executable used is specified by \code{FETCHCMD_p4}, which defaults to ``p4''. The fetcher's temporary working directory is set by \bbgls{P4DIR}, which defaults to ``\code{DL_DIR/p4}''. The fetcher does not make use of a perforce client, instead it relies on p4 files to retrieve a list of files and p4 print to transfer the content of those files locally.
 
-此 fetcher 子模块用于从 Perforce 源代码控制系统提取代码。使用的可执行文件由 \code{FETCHCMD_p4} 变量来指定，默认值为 ``p4''。fetcher 的临时工作目录由 \bbgls{P4DIR} 变量来设置，默认值为 ``DL\_DIR/p4''。fetcher 不需要使用 perforce 的客户端软件，而是依靠 \code{p4 files} 命令来检索文件列表并使用 \code{p4 print} 命令在本地传输这些文件的内容。
+此获取工具（fetcher）子模块用于从 Perforce 源代码控制系统提取代码。使用的可执行文件由 \code{FETCHCMD_p4} 变量来指定，默认值为 ``p4''。fetcher 的临时工作目录由 \bbgls{P4DIR} 变量来设置，默认值为 ``DL\_DIR/p4''。fetcher 不需要使用 perforce 的客户端软件，而是依靠 \code{p4 files} 命令来检索文件列表并使用 \code{p4 print} 命令在本地传输这些文件的内容。
 
 To use this fetcher, make sure your recipe has proper \bbgls{SRC_URI}, \bbgls{SRCREV}, and \bbgls{PV} values. The p4 executable is able to use the config file defined by your system's \code{P4CONFIG} environment variable in order to define the Perforce server URL and port, username, and password if you do not wish to keep those values in a recipe itself. If you choose not to use \code{P4CONFIG}, or to explicitly set variables that \code{P4CONFIG} can contain, you can specify the \code{P4PORT} value, which is the server's URL and port number, and you can specify a username and password directly in your recipe within \bbgls{SRC_URI}.
 
-要使用此 fetcher，请确保你的配方具有正确的 \bbgls{SRC_URI}、\bbgls{SRCREV} 和 \bbgls{PV} 值。如果你不希望在配方本身中保留这些值，则 p4 的可执行文件能够使用由系统环境变量 \code{P4CONFIG} 所定义的配置文件来定义 Perforce 服务器的 URL 和端口、用户名和密码。如果你选择不使用 \code{P4CONFIG}，或者选择明确设置 \code{P4CONFIG} 所包含的其他变量，则可以设定 \code{P4PORT} 变量的值，即服务器的 URL 和端口号，并且你可以在配方中的 \bbgls{SRC_URI} 变量中直接指定用户名和密码。
+要使用此获取工具（fetcher），请确保你的配方具有正确的 \bbgls{SRC_URI}、\bbgls{SRCREV} 和 \bbgls{PV} 值。如果你不希望在配方本身中保留这些值，则 p4 的可执行文件能够使用由系统环境变量 \code{P4CONFIG} 所定义的配置文件来定义 Perforce 服务器的 URL 和端口、用户名和密码。如果你选择不使用 \code{P4CONFIG}，或者选择明确设置 \code{P4CONFIG} 所包含的其他变量，则可以设定 \code{P4PORT} 变量的值，即服务器的 URL 和端口号，并且你可以在配方中的 \bbgls{SRC_URI} 变量中直接指定用户名和密码。
 
 Here is an example that relies on \code{P4CONFIG} to specify the server URL and port, username, and password, and fetches the Head Revision:
 
@@ -719,7 +721,7 @@ You should always set \href{https://docs.yoctoproject.org/ref-manual/variables.h
 
 By default, the fetcher strips the depot location from the local file paths. In the above example, the content of \code{example-depot/main/source/} will be placed in \code{${WORKDIR}/p4}. For situations where preserving parts of the remote depot paths locally is desirable, the fetcher supports two parameters:
 
-默认情况下，fetcher 会从本地文件路径中删除软件仓库的位置。在上面的例子中，\code{example-depot/main/source/} 的内容将被放置 \code{${WORKDIR}/p4} 目录中。在如果需要在本地保留部分远程软件仓库路径的情况，fetcher 支持两个参数：
+默认情况下，获取工具（fetcher）会从本地文件路径中删除软件仓库的位置。在上面的例子中，\code{example-depot/main/source/} 的内容将被放置 \code{${WORKDIR}/p4} 目录中。在如果需要在本地保留部分远程软件仓库路径的情况，获取工具（fetcher）支持两个参数：
 
 \begin{itemize}
 \setlength\itemsep{1.0em}
@@ -733,7 +735,7 @@ The top-level depot location or directory to fetch. The value of this parameter 
 When used with the value ``\code{keep}'', the fetcher will mirror the full depot paths locally for the specified location, even in combination with the \code{module} parameter.
 
 \medskip
-当被设定为 ``keep'' 值时，fetcher 将在本地为指定的代码仓库建立一个完整的镜像，甚至可以与 \code{module} 参数结合使用。
+当被设定为 ``keep'' 值时，获取工具（fetcher）将在本地为指定的代码仓库建立一个完整的镜像，甚至可以与 \code{module} 参数结合使用。
 \end{itemize}
 
 Here is an example use of the the module parameter:
@@ -764,11 +766,11 @@ In this case, the content of the top-level directory \code{source/} will be fetc
 
 This fetcher submodule fetches code from \code{google-repo} source control system. The fetcher works by initiating and syncing sources of the repository into \bbgls{REPODIR}, which is usually \code{${DL_DIR}/repo}.
 
-此 fetcher 子模块用于从 google-repo 源代码控制系统中来提取代码。fetcher 会初始化和把代码仓库的源代码同步到 \bbgls{REPODIR} 目录中（通常是 \code{${DL_DIR}/repo} ）。
+此获取工具（fetcher）子模块用于从 google-repo 源代码控制系统中来提取代码。fetcher 会初始化和把代码仓库的源代码同步到 \bbgls{REPODIR} 目录中（通常是 \code{${DL_DIR}/repo} ）。
 
 This fetcher supports the following parameters:
 
-该 fetcher 支持以下参数：
+该获取工具（fetcher）支持以下参数：
 
 \begin{itemize}
 \setlength\itemsep{1.0em}
@@ -796,7 +798,7 @@ SRC_URI = "repo://REPOROOT;protocol=file;branch=some_branch;manifest=my_manifest
 
 This submodule fetches data from an \href{https://docs.microsoft.com/en-us/azure/storage/}{Azure Storage account} , it inherits its functionality from the HTTP wget fetcher, but modifies its behavior to accomodate the usage of a \href{https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview}{Shared Access Signature (SAS)} for non-public data.
 
-该 fetcher 是用于从 \href{https://docs.microsoft.com/en-us/azure/storage/}{Azure 存储帐户}获取数据，它继承了 HTTP wget fetcher 的功能，但做了一些修改以适应对非公开数据使用\href{https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview}{共享访问签名 (SAS)} 。
+该获取工具（fetcher）是用于从 \href{https://docs.microsoft.com/en-us/azure/storage/}{Azure 存储帐户}获取数据，它继承了 HTTP wget fetcher 的功能，但做了一些修改以适应对非公开数据使用\href{https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview}{共享访问签名 (SAS)} 。
 
 Such functionality is set by the variable:
 
@@ -806,7 +808,7 @@ Such functionality is set by the variable:
 \setlength\itemsep{1.0em}
 \item \bbgls{AZ_SAS}: The Azure Storage Shared Access Signature provides secure delegate access to resources, if this variable is set, the Az Fetcher will use it when fetching artifacts from the cloud.
 
-\item \bbgls{AZ_SAS}: Azure 存储共享访问签名提供了对资源的安全委托访问，如果设置了此变量，Az Fetcher 将在从云中获取项目的时间使用此变量值。
+\item \bbgls{AZ_SAS}: Azure 存储共享访问签名提供了对资源的安全委托访问，如果设置了此变量，Az 的获取工具（fetcher）将在从云中获取项目的时间使用此变量值。
 
 \end{itemize}
 
@@ -834,21 +836,19 @@ It can also be used when setting mirrors definitions using the \bbgls{PREMIRRORS
 
 This submodule fetches data from a \href{https://cloud.google.com/storage/docs/buckets}{Google Cloud Storage Bucket}. It uses the \href{https://cloud.google.com/python/docs/reference/storage/latest}{Google Cloud Storage Python Client} to check the status of objects in the bucket and download them. The use of the Python client makes it substantially faster than using command line tools such as gsutil.
 
-此 fetcher 子模块是从 \href{https://cloud.google.com/storage/docs/buckets}{Google Cloud Storage Bucket} 中提取数据。它使用 \href{https://cloud.google.com/python/docs/reference/storage/latest}{Google Cloud Storage Python 客户端} 来检查存储桶中（Storage Bucket）的对象的状态并下载它们。使用 Python 客户端比使用 gsutil 等命令行工具要快得多。
+此获取工具（fetcher）子模块是从 \href{https://cloud.google.com/storage/docs/buckets}{Google Cloud Storage Bucket} 中提取数据。它使用 \href{https://cloud.google.com/python/docs/reference/storage/latest}{Google Cloud Storage Python 客户端} 来检查存储桶中（Storage Bucket）的对象的状态并下载它们。使用 Python 客户端比使用 gsutil 等命令行工具要快得多。
 
 The fetcher requires the Google Cloud Storage Python Client to be installed, along with the gsutil tool.
 
-该 fetcher 需要安装 Google Cloud Storage Python 客户端以及 gsutil 工具。
+该获取工具（fetcher）需要安装 Google Cloud Storage Python 客户端以及 gsutil 工具。
 
 The fetcher requires that the machine has valid credentials for accessing the chosen bucket. Instructions for authentication can be found in the \href{https://cloud.google.com/docs/authentication/provide-credentials-adc#local-dev}{Google Cloud documentation}.
 
-获取程序要求构建主机具有访问所选存储桶（storage bucket）的有效身份认证。身份验证说明可在 \href{https://cloud.google.com/docs/authentication/provide-credentials-adc#local-dev}{Google Cloud 文档}中找到。
-
-
+该获取工具（fetcher）要求构建主机具有访问所选存储桶（storage bucket）的有效身份认证。身份验证说明可在 \href{https://cloud.google.com/docs/authentication/provide-credentials-adc#local-dev}{Google Cloud 文档}中找到。
 
 If it used from the OpenEmbedded build system, the fetcher can be used for fetching sstate artifacts from a GCS bucket by specifying the \code{SSTATE_MIRRORS} variable as shown below:
 
-如果 fetcher 是在 OpenEmbedded 构建系统中使用的，则可以通过指定 \code{SSTATE_MIRRORS} 变量来使用 fetcher 从 GCS 存储桶(butcket) 中获取 sstate 构件，如下所示：
+如果获取工具（fetcher）是在 OpenEmbedded 构建系统中使用的，则可以通过指定 \code{SSTATE_MIRRORS} 变量来使用获取工具（fetcher）从 GCS 存储桶(butcket) 中获取 sstate 构件，如下所示：
 
 \begin{pyglist}
 SSTATE_MIRRORS ?= "\
@@ -858,7 +858,7 @@ SSTATE_MIRRORS ?= "\
 
 The fetcher can also be used in recipes:
 
-fetcher 也可以用于配方中：
+获取工具（fetcher）也可以用于配方中：
 
 \begin{pyglist}
 SRC_URI = "gs://<bucket name>/<foo_container>/<bar_file>"
@@ -876,7 +876,7 @@ SRC_URI[sha256sum] = "<sha256 string>"
 
 This submodule fetches code for \href{https://doc.rust-lang.org/reference/glossary.html?highlight=crate#crate}{Rust language ``crates''} corresponding to Rust libraries and programs to compile. Such crates are typically shared on \url{https://crates.io/} but this fetcher supports other crate registries too.
 
-此 fetcher 子模块用于获取与要编译的 Rust 库和程序相对应的 \href{https://doc.rust-lang.org/reference/glossary.html?highlight=crate#crate}{Rust 语言“crate”代码}。此类的 ``crate'' 代码通常通过 \url{https://crates.io/} 网站来共享，但此 fetcher 也支持其他 crate 共享注册登记。
+此获取工具（fetcher）子模块用于获取与要编译的 Rust 库和程序相对应的 \href{https://doc.rust-lang.org/reference/glossary.html?highlight=crate#crate}{Rust 语言“crate”代码}。此类的 ``crate'' 代码通常通过 \url{https://crates.io/} 网站来共享，但此获取工具（fetcher）也支持其他 crate 共享注册登记。
 
 The format for the \bbgls{SRC_URI} setting must be:
 
@@ -898,7 +898,7 @@ SRC_URI = "crate://crates.io/glob/0.2.11"
 
 This submodule fetches source code from an \href{https://en.wikipedia.org/wiki/Npm_(software)}{NPM} Javascript package registry.
 
-该 fetcher 子模块用于从 \href{https://en.wikipedia.org/wiki/Npm_(software)}{NPM} 的 Javascript 包登记册中获取源代码。
+该获取工具（fetcher）子模块用于从 \href{https://en.wikipedia.org/wiki/Npm_(software)}{NPM} 的 Javascript 包登记册中获取源代码。
 
 The format for the \bbgls{SRC_URI} setting must be:
 
@@ -910,7 +910,7 @@ SRC_URI = "npm://some.registry.url;ParameterA=xxx;ParameterB=xxx;..."
 
 This fetcher supports the following parameters:
 
-该 fetcher 支持以下参数：
+该获取工具（fetcher）支持以下参数：
 
 \begin{itemize}
 \setlength\itemsep{1.0em}
@@ -929,11 +929,11 @@ This fetcher supports the following parameters:
 
 Note that NPM fetcher only fetches the package source itself. The dependencies can be fetched through the \bbsections{npmsw-fetcher}{npmsw-fetcher}.
 
-注意，NPM fetcher 仅获取包的源代码。包的依赖项可以通过 \bbsections{npmsw-fetcher}{npmsw-fetcher} 来获取。
+注意，NPM 的获取工具（fetcher）仅获取包的源代码。包的依赖项可以通过 \bbsections{npmsw-fetcher}{npmsw-fetcher} 来获取。
 
 Here is an example URL with both fetchers:
 
-以下是包含两个 fetcher 的示例 URL：
+以下是包含两个获取工具（fetcher）的示例 URL：
 
 \begin{pyglist}
 SRC_URI = " \
@@ -951,7 +951,7 @@ See \href{https://docs.yoctoproject.org/dev-manual/packages.html#creating-node-p
 
 This submodule fetches source code from an \href{https://docs.npmjs.com/cli/v8/commands/npm-shrinkwrap}{NPM shrinkwrap} description file, which lists the dependencies of an NPM package while locking their versions.
 
-该 fetcher 子模块用于从 \href{https://docs.npmjs.com/cli/v8/commands/npm-shrinkwrap}{NPM shrinkwrap} 的描述文件中获取源代码，该文件列出了特定版本的 NPM 包的依赖项。
+该获取工具（fetcher）子模块用于从 \href{https://docs.npmjs.com/cli/v8/commands/npm-shrinkwrap}{NPM shrinkwrap} 的描述文件中获取源代码，该文件列出了特定版本的 NPM 包的依赖项。
 
 The format for the \bbgls{SRC_URI} setting must be:
 
@@ -963,7 +963,7 @@ SRC_URI = "npmsw://some.registry.url;ParameterA=xxx;ParameterB=xxx;..."
 
 This fetcher supports the following parameters:
 
-该 fetcher 支持以下参数：
+该获取工具（fetcher）支持以下参数：
 
 \begin{itemize}
 \setlength\itemsep{1.0em}
@@ -990,11 +990,11 @@ Such a file can automatically be generated using \href{https://docs.yoctoproject
 
 可以使用 \href{https://docs.yoctoproject.org/ref-manual/devtool-reference.html}{devtool} 自动生成此类文件。请参阅 Yocto 项目的 \href{https://docs.yoctoproject.org/dev-manual/packages.html#creating-node-package-manager-npm-packages}{Creating Node Package Manager (NPM) Packages} 部分。
 
-\subsection{Other Fetchers}
-\label{section:Fetchers}
+\subsection{Other Fetchers}{其他的源文件获取工具}
+\label{section:Other Fetchers}
 
 Fetch submodules also exist for the following:
-下列格式的URL也存在 fetcher 子模块：
+下列格式的URL也存在获取工具（fetcher）子模块：
 
 \begin{itemize}
 \setlength\itemsep{1.0em}
@@ -1015,7 +1015,7 @@ Fetch submodules also exist for the following:
 
 No documentation currently exists for these lesser used fetcher submodules. However, you might find the code helpful and readable.
 
-目前还没有关于这些很少使用的 fetcher 子模块的文档。但是你可能会发现源代码会很有帮助并且也很容易阅读和理解。
+目前还没有关于这些很少使用的获取工具（fetcher）子模块的文档。但是你可能会发现源代码会很有帮助并且也很容易阅读和理解。
 
 \section{Auto Revisions}
 

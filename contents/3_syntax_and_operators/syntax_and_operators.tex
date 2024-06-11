@@ -67,7 +67,7 @@ Sometimes you need to modify existing variables. Following are some cases where 
 \item Customize a recipe that uses the variable.
 
 \medskip
-自定义使用了该变量的配方。
+对使用了该变量的配方进行定制。
 
 \item Change a variable's default value used in a \code{*.bbclass} file.
 
@@ -1538,7 +1538,7 @@ With these conditions met, your single recipe can freely choose between the orig
 
 Tasks are BitBake execution units that make up the steps that BitBake can run for a given recipe. Tasks are only supported in recipes and classes (i.e. in .bb files and files included or inherited from \code{.bb} files). By convention, tasks have names that start with ``do\_''.
 
-任务是 BitBake 执行单元，也是BitBake 用来运行给定配方的步骤组成。只有配方文件和类文件（即在 \code{.bb} 文件和从 \code{.bb} 文件中包含或者继承的文件中）支持任务的定义。按照惯例，任务的名称以 ``do\_'' 开头。
+任务是 BitBake 的执行单元，也是BitBake 用来运行给定配方的步骤组成。只有配方文件和类文件（即在 \code{.bb} 文件和从 \code{.bb} 文件中包含或者继承的文件中）支持任务的定义。按照惯例，任务的名称以 ``do\_'' 开头。
 
 \newsubsection{Promoting a Function to a Task}{将函数提升为任务}
 
@@ -1795,7 +1795,7 @@ It is important to record any paths which the task looked at and which didn't ex
 \item \texttt{[network]}: When set to ``1'', allows a task to access the network. By default, only the \code{do_fetch} task is granted network access. Recipes shouldn't access the network outside of \code{do_fetch} as it usually undermines fetcher source mirroring, image and licence manifests, software auditing and supply chain security.
 
 \medskip
-\texttt{[network]}: 当此变量标志被设置为``1''时，允许任务访问网络。默认情况下，只有 \code{do_fetch} 任务被授予网络访问的权限。配方文件在除了 \code{do_fetch} 任务外，不应被允许访问外部网络，这样做的原因是因为这通常会消弱或者破坏 fetcher 的源代码镜像、图像和许可证的清单、软件审计和供应链安全。
+\texttt{[network]}: 当此变量标志被设置为``1''时，允许任务访问网络。默认情况下，只有 \code{do_fetch} 任务被授予网络访问的权限。配方文件在除了 \code{do_fetch} 任务外，不应被允许访问外部网络，这样做的原因是因为这通常会消弱或者破坏源文件获取工具（fetcher）的源代码镜像、图像和许可证的清单、软件审计和供应链安全。
 
 \item \texttt{[noexec]}: When set to ``1'', marks the task as being empty, with no execution required. You can use the \code{[noexec]} flag to set up tasks as dependency placeholders, or to disable tasks defined elsewhere that are not needed in a particular recipe.
 
@@ -2365,7 +2365,7 @@ The following list describes related variables:
 \bbgls{STAMPCLEAN}: 同样，用于创建戳记文件的基本路径，但可以使用通配符来匹配一系列文件以进行清理操作。
 \end{itemize}
 
-\section{Wildcard Support in Variables}
+\newsection{Wildcard Support in Variables}{变量中的通配符匹配}
 
 Support for wildcard use in variables varies depending on the context in which it is used. For example, some variables and filenames allow limited use of wildcards through the ``\%'' and ``*'' characters. Other variables or names support Python's \href{https://docs.python.org/3/library/glob.html}{glob} syntax, \href{https://docs.python.org/3/library/fnmatch.html#module-fnmatch}{fnmatch} syntax, or \href{https://docs.python.org/3/library/re.html}{Regular Expression (re)} syntax.
 
