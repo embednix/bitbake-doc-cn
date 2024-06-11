@@ -1,3 +1,5 @@
+[![Docker Image CI](https://github.com/embednix/bitbake-doc-cn/actions/workflows/docker-image.yml/badge.svg)](https://github.com/embednix/bitbake-doc-cn/actions/workflows/docker-image.yml)
+
 ## How compile on your local Linux system
 
 1. install the packages needed to compile the materials (example on Ubuntu 22.04):
