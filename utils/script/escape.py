@@ -23,9 +23,9 @@ def generate_space_replacement(space_number = 0):
     space_string=""
     for num in range(space_number):
         if num == 0:
-            space_string = "${}$\ "
+            space_string = "${}$\\ "
         else:
-            space_string += "\ "
+            space_string += "\\ "
     return space_string
 
 def process_input_file():

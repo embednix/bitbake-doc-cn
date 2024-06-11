@@ -17,7 +17,7 @@ In OpenEmbedded-Core, \bbgls{ASSUME_PROVIDED} mostly specifies native tools that
 Azure Storage Shared Access Signature, when using the \bbsections{Az Fetcher}{Azure Storage fetcher} This variable can be defined to be used by the fetcher to authenticate and gain access to non-public artifacts:
 
 \medskip
-Azure 存储共享访问签名，使用 Azure 存储 fetcher 时 ，可以定义此变量以供 fetcher 用于进行身份验证并获取非公开构建生成物的访问权限：
+Azure 存储共享访问签名，使用 \bbsections{Az Fetcher}{Azure Storage fetcher} 时 ，可以定义此变量以供 Az 的获取工具（ fetcher）来用于进行身份验证并获取非公开构建生成物的访问权限：
 
 \begin{codeblock}
 \footnotesize
@@ -46,7 +46,7 @@ BitBake 在配方构建过程中用来执行函数的工作目录。
 Specifies a space-delimited list of hosts that the fetcher is allowed to use to obtain the required source code. Following are considerations surrounding this variable:
 
 \medskip
-用来指定一个用空格进行分隔的，允许 fetcher 用来获取所需源代码的主机的列表。以下是有关此变量的注意事项：
+用来指定一个用空格进行分隔的，允许获取工具（fetcher）用来获取所需源代码的主机的列表。以下是有关此变量的注意事项：
 
 \medskip
 \begin{itemize}
@@ -99,7 +99,7 @@ For example, \code{*.foo.bar} is supported, while \code{*aa.foo.bar} is not.
 Using \bbgls{BB_ALLOWED_NETWORKS} in conjunction with \bbgls{PREMIRRORS} is very useful. Adding the host you want to use to \bbgls{PREMIRRORS} results in the source code being fetched from an allowed location and avoids raising an error when a host that is not allowed is in a \bbgls{SRC_URI} statement. This is because the fetcher does not attempt to use the host listed in \bbgls{SRC_URI} after a successful fetch from the \bbgls{PREMIRRORS} occurs.
 
 \medskip
-在下载源代码的时间，将 \bbgls{BB_ALLOWED_NETWORKS} 与 \bbgls{PREMIRRORS} 结合起来使用是非常有用的。将要使用的主机添加到 \bbgls{PREMIRRORS} 上去，这样源代码就会从允许的位置上下载下来，而且可以避免在 \bbgls{SRC_URI} 语句中存在不允许的主机时引发错误。这是因为在成功从 \bbgls{PREMIRRORS}获取源代码后，fetcher 就不会再尝试使用 \bbgls{SRC_URI} 中列出的主机了。
+在下载源代码的时间，将 \bbgls{BB_ALLOWED_NETWORKS} 与 \bbgls{PREMIRRORS} 结合起来使用是非常有用的。将要使用的主机添加到 \bbgls{PREMIRRORS} 上去，这样源代码就会从允许的位置上下载下来，而且可以避免在 \bbgls{SRC_URI} 语句中存在不允许的主机时引发错误。这是因为在成功从 \bbgls{PREMIRRORS}获取源代码后，获取工具（fetcher）就不会再尝试使用 \bbgls{SRC_URI} 中列出的主机了。
 
 }
 
@@ -371,7 +371,7 @@ You must set this variable in the external environment in order for it to work.
 When set to ``1'', causes BitBake's fetcher module to only search \bbgls{PREMIRRORS} for files. BitBake will not search the main \bbgls{SRC_URI} or \bbgls{MIRRORS}.
 
 \medskip
-当设置为 ``1'' 时，BitBake 的fetcher 模块仅在 \bbgls{PREMIRRORS} 中搜索文件。BitBake 不会搜索主 \bbgls{SRC_URI} 或 \bbgls{MIRRORS}。
+当设置为 ``1'' 时，BitBake 的获取工具（fetcher）模块仅在 \bbgls{PREMIRRORS} 中搜索文件。BitBake 不会搜索主 \bbgls{SRC_URI} 或 \bbgls{MIRRORS}。
 
 }
 
@@ -684,7 +684,7 @@ Allows BitBake to run at a specific priority (i.e. nice level). System permissio
 Disables network access in the BitBake fetcher modules. With this access disabled, any command that attempts to access the network becomes an error.
 
 \medskip
-禁用 BitBake 的 fetcher 模块中的网络访问权限。禁用此网络访问后，任何尝试访问网络的命令都会被当成错误来报告。
+禁用 BitBake 的获取工具（fetcher）模块的网络访问权限。禁用此网络访问后，任何尝试访问网络的命令都会被当成错误来报告。
 
 Disabling network access is useful for testing source mirrors, running builds when not connected to the Internet, and when operating in certain kinds of firewall environments.
 
@@ -927,7 +927,7 @@ A new signature handler can be added by injecting a class derived from the \code
 Defines the behavior of the fetcher when it interacts with source control systems and dynamic source revisions. The \bbgls{BB_SRCREV_POLICY} variable is useful when working without a network.
 
 \medskip
-用来定义 fetcher 与源代码控制系统和动态源代码版本修订交互时的行为。 当 BitBake 在没有网络的情况下工作时，\bbgls{BB_SRCREV_POLICY} 变量是很有用的。
+用来定义获取工具（fetcher）与源代码控制系统和动态源代码版本修订交互时的行为。 当 BitBake 在没有网络的情况下工作时，\bbgls{BB_SRCREV_POLICY} 变量是很有用的。
 
 \medskip
 The variable can be set using one of two policies:
@@ -1636,7 +1636,7 @@ Lists environment variables to set when running a task that is not in the fakero
 Defines the command the BitBake fetcher module executes when running fetch operations. You need to use an override suffix when you use the variable (e.g. \code{FETCHCMD_git} or \code{FETCHCMD_svn}).
 
 \medskip
-用来定义 BitBake fetcher 模块在运行 fetch 操作时执行的命令。在针对不同的版本控制系统使用此变量时，需要使用重写后缀（例如\code{FETCHCMD_git} 或 \code{FETCHCMD_svn}）。
+用来定义 BitBake 的获取工具（fetcher）模块在运行 fetch 操作时执行的命令。在针对不同的版本控制系统使用此变量时，需要使用重写后缀（例如\code{FETCHCMD_git} 或 \code{FETCHCMD_svn}）。
 
 }
 
@@ -1660,7 +1660,7 @@ During parsing and task execution, this is set to the name of the layer containi
 Specifies directories BitBake uses when searching for patches and files. The ``local'' fetcher module uses these directories when handling \code{file://} URLs. The variable behaves like a shell \code{PATH} environment variable. The value is a colon-separated list of directories that are searched left-to-right in order.
 
 \medskip
-用来指定 BitBake 在搜索补丁和文件时使用的目录。“本地” fetcher 模块在处理 \code{file://} 这类 URL 时会使用这些目录。该变量的行为类似于 shell \code{PATH} 环境变量。该值是一个以冒号分隔的目录列表，BitBake 会按照从左到右的顺序进行搜索。
+用来指定 BitBake 在搜索补丁和文件时使用的目录。“本地” 获取工具（fetcher）模块在处理 \code{file://} 这类 URL 时会使用这些目录。该变量的行为类似于 shell \code{PATH} 环境变量。该值是一个以冒号分隔的目录列表，BitBake 会按照从左到右的顺序进行搜索。
 
 }
 
@@ -2258,7 +2258,7 @@ The list of source files — local or remote. This variable tells BitBake which 
 The following list explains the available URI protocols. URI protocols are highly dependent on particular BitBake Fetcher submodules. Depending on the fetcher BitBake uses, various URL parameters are employed. For specifics on the supported Fetchers, see the ``\bbsection{Fetchers}'' section.
 
 \medskip
-以下列表解释了当前可用的 URI 协议。URI 协议高度依赖于特定的 BitBake Fetcher 子模块。根据 BitBake 所使用的 fetcher 的不同，其 bURL 参数也有所不同。有关 BitBake 支持的 fetcher 的详细信息，请参阅 ``\bbsection{Fetchers}'' 部分。
+以下列表解释了当前可用的 URI 协议。URI 协议高度依赖于特定的 BitBake 获取工具（fetcher）子模块。根据 BitBake 所使用的获取工具（fetcher）的不同，其 bURL 参数也有所不同。有关 BitBake 支持的获取工具（fetcher）的详细信息，请参阅 ``\bbsection{Fetchers}'' 部分。
 
 \medskip
 \begin{itemize}
@@ -2402,7 +2402,7 @@ SRC\_URI[third.sha256sum] = "13550350a8681c84c861aac2e5b440161c2b33a3e4f302ac680
 将文件（或提取的其内容）放入指定的子目录中。此选项对于不常见的 tarball 或其他档案非常有用，因为这些档案中的文件尚未位于档案内的子目录中。
 
 \item \code{subpath}: Limits the checkout to a specific subpath of the tree when using the Git fetcher is used.\par
-使用 Git fetcher 时仅仅检出代码树中的特定子路径部分的代码。
+使用 Git 的获取工具（fetcher）时仅仅检出代码树中的特定子路径部分的代码。
 
 \item \code{unpack}: Controls whether or not to unpack the file if it is an archive. The default action is to unpack the file. \par
 控制文件为存档时是否解压文件。默认操作是解压文件。
@@ -2422,9 +2422,12 @@ The date of the source code used to build the package. This variable applies onl
 The revision of the source code used to build the package. This variable applies only when using Subversion, Git, Mercurial and Bazaar. If you want to build a fixed revision and you want to avoid performing a query on the remote repository every time BitBake parses your recipe, you should specify a \bbgls{SRCREV} that is a full revision identifier and not just a tag.
 
 \medskip
-用于构建软件包的源代码的版本信息。此变量仅在使用 Subversion、Git、Mercurial 和 Bazaar 时适用。如果你想要构建固定的修订版本，并且想要避免每次 BitBake 解析你的配方时都对远程代码仓库进行查询，则应设定 \bbgls{SRCREV} 变量为一个完整的版本标识符，而不仅仅是一个标签。
+用于构建软件包的源代码的版本信息。此变量仅在使用 Subversion、Git、Mercurial 和 Bazaar 时适用。如果你想要使用固定版本的源码来进行构建，并且想要避免每次 BitBake 解析你的配方时都对远程代码仓库进行查询，则应设定 \bbgls{SRCREV} 变量为一个完整的版本标识符，而不仅仅是一个版本标签\footnotemark[1]。
+
+\footnotetext[1]{如果只是使用版本标签，比如使用 git tag，由于版本标签所代表的真正的代码提交哈希值会发生变化（删掉后又重新使用新的代码提交来作为新的代码标签），BitBake 仍然会去查询这个代码标签所代表的真正的代码提交哈希值}
 
 }
+
 
 \glsentry{SRCREV_FORMAT}{SRCREV\_FORMAT}{%
 Helps construct valid \bbgls{SRCREV} values when multiple source controlled URLs are used in \bbgls{SRC_URI}.
@@ -2436,7 +2439,32 @@ Helps construct valid \bbgls{SRCREV} values when multiple source controlled URLs
 The system needs help constructing these values under these circumstances. Each component in the \bbgls{SRC_URI} is assigned a name and these are referenced in the \bbgls{SRCREV_FORMAT} variable. Consider an example with URLs named ``machine'' and ``meta''. In this case, \bbgls{SRCREV_FORMAT} could look like ``machine\_meta'' and those names would have the SCM versions substituted into each position. Only one \code{AUTOINC} placeholder is added and if needed. And, this placeholder is placed at the start of the returned string.
 
 \medskip
-在这种情况下，系统需要一些帮助来构建这些值。\bbgls{SRC_URI} 中的每个组件都会分配一个名称，这些名称在 \bbgls{SRCREV_FORMAT} 变量中被引用。考虑一个名为 ``machine'' 和 ``meta'' 的 URL 的示例。在这种情况下， \bbgls{SRCREV_FORMAT} 可能看起来像 ``machine\_meta''，并且这些名称将在每个位置来替换 SCM 版本。如果需要，只需添加一个 \code{AUTOINC} 占位符即可。并且，此占位符放置在返回字符串的开头。
+在这种情况下，系统需要一些帮助来构建这些值。\bbgls{SRC_URI} 中的每个 URI 组件都会分配一个名称，这些名称在 \bbgls{SRCREV_FORMAT} 变量中被引用。考虑一个包含有名为 ``machine'' 和 ``meta'' 的 两个 URL 的 \bbgls{SRC_URI} 的例子。在这种情况下， \bbgls{SRCREV_FORMAT} 可能看起来像 ``machine\_meta''，并且这些名称将会对每一个相对应的 SCM 版本信息进行替换 。如果需要的话，只需添加一个 \code{AUTOINC} 占位符即可。并且，此占位符放置在 SCM 版本信息的返回字符串的开头。
+
+\begin{codeblock}
+\footnotesize
+\texttt{\noindent
+DESCRIPTION = "Example recipe with multiple source URIs and AUTOIN, added by Chinese translator" \linebreak
+LICENSE = "MIT" \linebreak
+ \linebreak
+\# Define SRC\_URI with two different Git repositories \linebreak
+SRC\_URI = "  \textbackslash  \linebreak
+${}$\ \ \ \ git://git.example.com/repo1.git;branch=main;name=repo1  \textbackslash  \linebreak
+${}$\ \ \ \ git://git.example.com/repo2.git;branch=develop;name=repo2  \textbackslash  \linebreak
+" \linebreak
+ \linebreak
+\# Define SRCREV for each repository \linebreak
+\# Note: abcdef1234567890 and 1234567890abcdef must be valid git commit hash \linebreak
+\# 'AUTOINC' ensures that each build gets a unique incremented revision number, which is particularly useful in continuous integration environments. \linebreak
+SRCREV\_repo1 = "\$\{AUTOINC\}+abcdef1234567890" \linebreak
+SRCREV\_repo2 = "\$\{AUTOINC\}+1234567890abcdef" \linebreak
+ \linebreak
+\# Define SRCREV\_FORMAT to concatenate the revisions \linebreak
+SRCREV\_FORMAT = "repo1\_repo2" \linebreak
+ \linebreak
+\# The rest of your recipe
+}
+\end{codeblock}    
 
 }
 

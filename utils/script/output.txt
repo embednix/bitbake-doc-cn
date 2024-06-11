@@ -1,0 +1,17 @@
+DESCRIPTION = "Example recipe with multiple source URIs and AUTOINC" \linebreak
+LICENSE = "MIT" \linebreak
+ \linebreak
+\# Define SRC\_URI with two different Git repositories \linebreak
+SRC\_URI = "  \textbackslash  \linebreak
+${}$\ \ \ \ git://git.example.com/repo1.git;branch=main;name=repo1  \textbackslash  \linebreak
+${}$\ \ \ \ git://git.example.com/repo2.git;branch=develop;name=repo2  \textbackslash  \linebreak
+" \linebreak
+ \linebreak
+\# Define SRCREV for each repository \linebreak
+SRCREV\_repo1 = "\$\{AUTOINC\}+abcdef1234567890" \linebreak
+SRCREV\_repo2 = "\$\{AUTOINC\}+1234567890abcdef" \linebreak
+ \linebreak
+\# Define SRCREV\_FORMAT to concatenate the revisions \linebreak
+SRCREV\_FORMAT = "repo1\_repo2" \linebreak
+ \linebreak
+\# The rest of your recipe \linebreak
